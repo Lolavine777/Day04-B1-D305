@@ -16,6 +16,8 @@ import time
 from typing import Any, Callable
 from urllib.parse import urlparse
 
+from providers.base import ToolCall
+
 MAX_INPUT_CHARS = 4000
 MAX_LIST_LIMIT = 20
 
@@ -78,6 +80,12 @@ PII_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 PRIVATE_HOST_PATTERN = re.compile(
     r"^(localhost|0\.0\.0\.0|127\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+"
     r"|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|169\.254\.\d+\.\d+)$",
+    re.IGNORECASE,
+)
+
+EXTERNAL_ACTION_PATTERN = re.compile(
+    r"(?:\b(?:send|post|publish)\b|\b(?:gửi|đăng|đăng tải|xuất bản)\b).{0,80}\b(?:telegram|channel|kênh)\b"
+    r"|\b(?:telegram|channel|kênh)\b.{0,80}(?:\b(?:send|post|publish)\b|\b(?:gửi|đăng|đăng tải|xuất bản)\b)",
     re.IGNORECASE,
 )
 
@@ -224,6 +232,19 @@ def check_tool_call(name: str, args: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, int) and value > MAX_LIST_LIMIT:
             sanitized[key] = MAX_LIST_LIMIT
     return {"allowed": True, "reason": None, "args": sanitized}
+
+
+def enforce_confirmation_boundary(messages: list[dict[str, str]], call: ToolCall) -> ToolCall:
+    """Require a yes/no clarification for a direct Telegram action request."""
+    latest_user = next(
+        (message.get("content", "") for message in reversed(messages) if message.get("role") == "user"),
+        "",
+    )
+    if call.name != "clarify" or not EXTERNAL_ACTION_PATTERN.search(latest_user):
+        return call
+    args = dict(call.args)
+    args["response_type"] = "yes_no"
+    return ToolCall(name=call.name, args=args)
 
 
 # ---------------- Fallback ----------------

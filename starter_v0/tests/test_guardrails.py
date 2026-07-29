@@ -13,6 +13,7 @@ from guardrails import (
     check_tool_call,
     detect_injection,
     detect_sensitive_content,
+    enforce_confirmation_boundary,
     fallback_hint,
     fallback_response,
     mask_pii,
@@ -128,6 +129,13 @@ class MaskPiiTests(unittest.TestCase):
 
 
 class CheckToolCallTests(unittest.TestCase):
+    def test_external_action_clarify_is_normalized_to_yes_no(self) -> None:
+        call = enforce_confirmation_boundary(
+            [{"role": "user", "content": "Đăng bản tin này lên Telegram giúp mình"}],
+            ToolCall(name="clarify", args={"question": "Nội dung là gì?", "response_type": "text"}),
+        )
+        self.assertEqual(call.args["response_type"], "yes_no")
+
     def test_blocks_send_with_confirmed_true(self) -> None:
         verdict = check_tool_call("send", {"text": "hi", "confirmed": True})
         self.assertFalse(verdict["allowed"])

@@ -12,6 +12,7 @@ from env_loader import load_lab_env
 from providers import make_provider
 from providers.base import ToolCall
 from tools import TOOL_FUNCTIONS, load_tool_declarations, to_openai_tools
+from guardrails import enforce_confirmation_boundary
 from versioning import artifact_version_dict, build_artifact_version
 
 
@@ -204,7 +205,10 @@ def run_model_tool_loop(
         )
         response_usage = getattr(response, "usage", {}) or {}
         _merge_usage(usage_total, response_usage)
-        calls = response.tool_calls
+        calls = [
+            enforce_confirmation_boundary(working_messages, call)
+            for call in response.tool_calls
+        ]
         round_record: dict[str, Any] = {
             "round": round_index,
             "assistant_text": response.text,
