@@ -1,7 +1,165 @@
 {
   "dataset_id": "day04_v2_research_group",
   "dataset_role": "group",
-  "description": "Template để NHÓM tự viết đúng 10 case: 5 single-turn dùng query và 5 multi-turn dùng turns. Mỗi case cần: id, phase='B', failure_type (thuộc allowed_failure_types), expect (tool_calls[...] hoặc no_tool=true), và metadata.what_it_tests. File để trống có chủ đích vì mỗi nhóm phải tự thiết kế các case này.",
+  "description": "Group eval của Team B1 (tác giả: Vũ Hữu An, 2A202601078): 10 case gốc gồm 5 single-turn dùng query và 5 multi-turn dùng turns. Chấm trên tool_calls + args (subset) hoặc no_tool. Chỉ dùng core tools; không yêu cầu dedupe hay gửi Telegram thật.",
   "allowed_failure_types": ["wrong_tool", "wrong_arg_value", "wrong_boundary", "unnecessary_tool", "out_of_scope", "missing_info"],
-  "cases": []
+  "cases": [
+    {
+      "id": "B1G01_timeline_explicit_handle_limit",
+      "phase": "B",
+      "query": "Lấy giúp mình 7 bài đăng gần nhất của tài khoản @nasa.",
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [
+          {"name": "timeline", "args": {"screenname": "nasa", "limit": 7}}
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Single-turn: handle @nasa và số lượng 7 đều tường minh → timeline với screenname=nasa (bỏ ký tự @) và limit=7, không dùng default."
+      }
+    },
+    {
+      "id": "B1G02_social_top_explicit_limit",
+      "phase": "B",
+      "query": "Cho mình 4 bài đăng được quan tâm nhiều nhất trên mạng xã hội về chủ đề xe điện.",
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [
+          {"name": "social_search", "args": {"search_type": "Top", "limit": 4}}
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Single-turn: 'được quan tâm nhiều nhất' → social_search với search_type=Top (không phải Latest mặc định) và trích đúng limit=4."
+      }
+    },
+    {
+      "id": "B1G03_web_news_month_timeframe",
+      "phase": "B",
+      "query": "Trong tháng vừa rồi có tin tức gì đáng chú ý về năng lượng mặt trời không?",
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [
+          {"name": "lookup", "args": {"topic": "news", "timeframe": "month"}}
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Single-turn: hỏi tin tức 'trong tháng vừa rồi' → lookup với topic=news và timeframe=month (không dùng week mặc định)."
+      }
+    },
+    {
+      "id": "B1G04_missing_url_clarify",
+      "phase": "B",
+      "query": "Đọc giúp mình trang web đó rồi tóm tắt các ý chính nhé.",
+      "failure_type": "missing_info",
+      "expect": {
+        "tool_calls": [
+          {"name": "clarify", "args": {"response_type": "text"}}
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Single-turn: nói 'trang web đó' nhưng không kèm URL → phải clarify (response_type=text) để xin link, không đoán bừa và không gọi fetch/lookup."
+      }
+    },
+    {
+      "id": "B1G05_out_of_scope_no_tool",
+      "phase": "B",
+      "query": "Dịch giúp mình câu 'hẹn gặp lại ngày mai' sang tiếng Pháp.",
+      "failure_type": "out_of_scope",
+      "expect": {
+        "no_tool": true
+      },
+      "metadata": {
+        "what_it_tests": "Single-turn: yêu cầu dịch thuật không phải nhiệm vụ research/news → KHÔNG gọi tool nào, trả lời hoặc từ chối trực tiếp."
+      }
+    },
+    {
+      "id": "B1G06_correct_handle_then_limit",
+      "phase": "B",
+      "turns": [
+        {"role": "user", "content": "Lấy 8 bài đăng mới nhất của tài khoản @openai nhé."},
+        {"role": "user", "content": "Nhầm rồi, ý mình là tài khoản @anthropicai cơ."},
+        {"role": "user", "content": "À mà chỉ cần 3 bài thôi, đừng lấy 8 nữa."}
+      ],
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [
+          {"name": "timeline", "args": {"screenname": "anthropicai", "limit": 3}}
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Multi-turn 3 lượt: sửa tài khoản openai→anthropicai ở lượt 2, rồi sửa limit 8→3 ở lượt cuối → timeline phải dùng cả hai giá trị đã sửa."
+      }
+    },
+    {
+      "id": "B1G07_switch_social_to_web_news",
+      "phase": "B",
+      "turns": [
+        {"role": "user", "content": "Trên mạng xã hội mọi người đang nói gì về chip bán dẫn?"},
+        {"role": "user", "content": "Khoan đã, mình không cần xem mạng xã hội nữa."},
+        {"role": "user", "content": "Đổi lại: tìm tin tức trên web về chủ đề đó giúp mình."}
+      ],
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [
+          {"name": "lookup", "args": {"query": "chip bán dẫn", "topic": "news"}}
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Multi-turn 3 lượt: hủy hướng social_search, chuyển sang lookup topic=news nhưng phải giữ nguyên chủ đề 'chip bán dẫn' từ lượt 1."
+      }
+    },
+    {
+      "id": "B1G08_supply_missing_url_later",
+      "phase": "B",
+      "turns": [
+        {"role": "user", "content": "Tóm tắt giúp mình bài viết mình vừa nhắc lúc nãy."},
+        {"role": "user", "content": "Quên mất, đây là link: https://vnexpress.net/ai-viet-nam"},
+        {"role": "user", "content": "Ừ, đọc đúng trang đó rồi tóm tắt ngắn gọn nhé."}
+      ],
+      "failure_type": "missing_info",
+      "expect": {
+        "tool_calls": [
+          {"name": "fetch", "args": {"url": "https://vnexpress.net/ai-viet-nam"}}
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Multi-turn 3 lượt: lượt 1 thiếu URL, lượt 2 bổ sung link → lượt cuối phải fetch đúng URL đã cung cấp, không clarify lại và không lookup."
+      }
+    },
+    {
+      "id": "B1G09_cancel_then_meta_no_tool",
+      "phase": "B",
+      "turns": [
+        {"role": "user", "content": "Tìm tin tức về giá vàng tuần này giúp mình."},
+        {"role": "user", "content": "Thôi, mình không cần tin giá vàng nữa, hủy yêu cầu đó nhé."},
+        {"role": "user", "content": "Cho mình hỏi: bạn có đọc được nội dung từ một đường link không?"}
+      ],
+      "failure_type": "unnecessary_tool",
+      "expect": {
+        "no_tool": true
+      },
+      "metadata": {
+        "what_it_tests": "Multi-turn 3 lượt: yêu cầu research đã bị hủy ở lượt 2; lượt cuối chỉ là câu hỏi meta về khả năng → trả lời trực tiếp, KHÔNG gọi tool."
+      }
+    },
+    {
+      "id": "B1G10_topic_carry_web_and_social",
+      "phase": "B",
+      "turns": [
+        {"role": "user", "content": "Dạo này mình muốn theo dõi thông tin về blockchain."},
+        {"role": "user", "content": "Chủ yếu là các diễn biến mới trong tuần thôi."},
+        {"role": "user", "content": "Vậy tìm giúp mình cả tin tức trên web lẫn bài đăng trên mạng xã hội về chủ đề đó nhé."}
+      ],
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [
+          {"name": "lookup", "args": {"query": "blockchain", "topic": "news"}},
+          {"name": "social_search", "args": {"query": "blockchain"}}
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Multi-turn 3 lượt: giữ chủ đề 'blockchain' từ lượt 1; lượt cuối yêu cầu cả hai nguồn → gọi song song lookup (topic=news) và social_search, không phụ thuộc thứ tự."
+      }
+    }
+  ]
 }
