@@ -244,6 +244,24 @@ class FallbackProvider:
         raise RuntimeError("backend unavailable (fallback mode)")
 
 
+def fallback_hint(error_text: str) -> str:
+    """Turn a (sanitized) backend error into an actionable hint for the UI banner."""
+    lowered = error_text.lower()
+    if "missing api key" in lowered or "api key env var" in lowered:
+        return (
+            "Nguyên nhân: thiếu API key của provider. Tạo file starter_v0/.env "
+            "(copy từ .env.example) và điền OPENROUTER_API_KEY (hoặc key của provider bạn chọn), "
+            "sau đó khởi động lại app."
+        )
+    if any(word in lowered for word in ("connection", "timeout", "timed out", "max retries", "getaddrinfo")):
+        return "Nguyên nhân: lỗi mạng khi gọi provider. Kiểm tra kết nối internet rồi thử lại."
+    if any(word in lowered for word in ("401", "unauthorized", "403", "invalid api key")):
+        return "Nguyên nhân: API key bị từ chối. Kiểm tra lại giá trị key trong .env."
+    if any(word in lowered for word in ("429", "rate limit", "quota", "insufficient")):
+        return "Nguyên nhân: provider hết quota hoặc bị rate limit. Chờ một lúc hoặc đổi key/provider."
+    return "Nguyên nhân: backend gặp lỗi không xác định. Xem chi tiết trong transcript."
+
+
 def fallback_response(text: str) -> str:
     lowered = text.lower()
     if any(word in lowered for word in ("làm được", "bạn là gì", "khả năng", "help", "trợ giúp")):
