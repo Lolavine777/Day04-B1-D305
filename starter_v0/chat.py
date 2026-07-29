@@ -253,7 +253,7 @@ def run_model_tool_loop(
             guard_block_reason: str | None = None
             if tool_guard is not None:
                 verdict = tool_guard(call.name, call.args)
-                if not verdict.get("allowed", True):
+                if verdict.get("allowed") is not True:
                     guard_block_reason = (
                         verdict.get("reason")
                         or "Tool call blocked by guardrail."

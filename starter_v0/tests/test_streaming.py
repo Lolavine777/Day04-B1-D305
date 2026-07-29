@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from chat import run_model_tool_loop
 from providers.base import ModelResponse, ToolCall
@@ -141,6 +141,108 @@ class StreamingLoopTests(unittest.TestCase):
         tool_event = result["tool_events"][0]
         self.assertEqual(tool_event["result"]["error"], "tool_disabled")
         self.assertEqual(tool_event["status"], "error")
+
+    def test_allowed_guard_runs_once_and_uses_sanitized_args_in_lifecycle(
+        self,
+    ) -> None:
+        original_args = {"query": "AI", "max_results": 500}
+        sanitized_args = {"query": "AI", "max_results": 20}
+        provider = StreamingProvider(
+            [
+                ModelResponse(
+                    tool_calls=[
+                        ToolCall(name="lookup", args=original_args)
+                    ]
+                ),
+                ModelResponse(text="Done."),
+            ]
+        )
+        guard = Mock(
+            return_value={"allowed": True, "args": sanitized_args}
+        )
+        executed: list[dict] = []
+        events: list[dict] = []
+
+        def lookup(**kwargs):
+            executed.append(kwargs)
+            return {"items": []}
+
+        with patch.dict("chat.TOOL_FUNCTIONS", {"lookup": lookup}):
+            result = run_model_tool_loop(
+                provider=provider,
+                messages=[{"role": "user", "content": "Research AI"}],
+                tools=[],
+                model=None,
+                max_tool_rounds=2,
+                event_callback=events.append,
+                tool_guard=guard,
+            )
+
+        guard.assert_called_once_with("lookup", original_args)
+        self.assertEqual(executed, [sanitized_args])
+        started = next(
+            event for event in events if event["type"] == "tool_started"
+        )
+        completed = next(
+            event for event in events if event["type"] == "tool_completed"
+        )
+        self.assertEqual(started["args"], sanitized_args)
+        self.assertEqual(completed["args"], sanitized_args)
+        self.assertEqual(completed["status"], "success")
+        self.assertEqual(started["tool_id"], completed["tool_id"])
+        self.assertEqual(result["tool_events"][0]["args"], sanitized_args)
+
+    def test_guard_without_explicit_allow_runs_once_and_blocks_tool(
+        self,
+    ) -> None:
+        original_args = {"query": "private"}
+        provider = StreamingProvider(
+            [
+                ModelResponse(
+                    tool_calls=[
+                        ToolCall(name="lookup", args=original_args)
+                    ]
+                ),
+                ModelResponse(text="Blocked."),
+            ]
+        )
+        guard = Mock(return_value={"reason": "Denied by policy."})
+        events: list[dict] = []
+
+        def fail_if_called(**kwargs):
+            raise AssertionError("denied tool was executed")
+
+        with patch.dict(
+            "chat.TOOL_FUNCTIONS",
+            {"lookup": fail_if_called},
+        ):
+            result = run_model_tool_loop(
+                provider=provider,
+                messages=[{"role": "user", "content": "Research private"}],
+                tools=[],
+                model=None,
+                max_tool_rounds=2,
+                event_callback=events.append,
+                tool_guard=guard,
+            )
+
+        guard.assert_called_once_with("lookup", original_args)
+        started = next(
+            event for event in events if event["type"] == "tool_started"
+        )
+        completed = next(
+            event for event in events if event["type"] == "tool_completed"
+        )
+        self.assertEqual(started["tool_id"], completed["tool_id"])
+        self.assertEqual(completed["status"], "error")
+        self.assertEqual(
+            completed["result"]["error"],
+            "blocked_by_guardrail",
+        )
+        self.assertEqual(
+            result["tool_events"][0]["result"]["error"],
+            "blocked_by_guardrail",
+        )
 
     def test_cancellation_after_model_response_skips_tools(self) -> None:
         cancelled = False
