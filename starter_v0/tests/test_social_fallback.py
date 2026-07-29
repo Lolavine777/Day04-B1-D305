@@ -114,7 +114,9 @@ class TavilySocialFallbackTests(unittest.TestCase):
 
         self.assertEqual(result["tool"], "get_user_tweets")
         self.assertEqual(result["error"], "HTTPError")
-        self.assertIn("Tavily unavailable", result["message"])
+        self.assertEqual(result["code"], "upstream_http_error")
+        self.assertEqual(result["message"], "Tavily request failed.")
+        self.assertNotIn("Tavily unavailable", repr(result))
 
 
 if __name__ == "__main__":

@@ -55,6 +55,11 @@ def search_tweets(
             "provider": "tavily",
             "error": result["error"],
             "message": result.get("message", "Tavily search failed."),
+            **{
+                key: result[key]
+                for key in ("code", "status_code")
+                if key in result
+            },
         }
     return {
         "tool": "search_tweets",

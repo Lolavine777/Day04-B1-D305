@@ -29,5 +29,9 @@ def read_url(url: str = "") -> dict[str, Any]:
             "summary": (data.get("markdown") or "")[:4000],
         }]}
     except Exception as exc:
-        return err("read_url", exc)
-
+        return err(
+            "read_url",
+            exc,
+            service="Firecrawl",
+            secret_name="FIRECRAWL_API_KEY",
+        )
