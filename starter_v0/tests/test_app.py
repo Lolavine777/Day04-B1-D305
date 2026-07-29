@@ -28,6 +28,14 @@ class FakeProvider:
 
 
 class AppLoopTests(unittest.TestCase):
+    def test_theme_uses_readable_research_cockpit_tokens(self) -> None:
+        css = app.THEME_CSS
+
+        self.assertIn("--agent-bg:", css)
+        self.assertIn("--agent-ink:", css)
+        self.assertIn("color: var(--agent-ink)", css)
+        self.assertNotIn("radial-gradient", css)
+
     def test_setup_template_contains_names_only(self) -> None:
         template = app.setup_template("openrouter")
 
