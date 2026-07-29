@@ -28,6 +28,26 @@ class FakeProvider:
 
 
 class AppLoopTests(unittest.TestCase):
+    def test_setup_template_contains_names_only(self) -> None:
+        template = app.setup_template("openrouter")
+
+        self.assertIn('OPENROUTER_API_KEY = "PASTE_VALUE_HERE"', template)
+        self.assertIn('TAVILY_API_KEY = "PASTE_VALUE_HERE"', template)
+        self.assertIn('FIRECRAWL_API_KEY = "PASTE_VALUE_HERE"', template)
+        self.assertNotIn("sk-", template)
+        self.assertNotIn("RAPIDAPI", template)
+
+    def test_secret_status_excludes_values(self) -> None:
+        status = app.secret_status(
+            "openrouter",
+            environ={"OPENROUTER_API_KEY": "secret-value"},
+        )
+
+        self.assertTrue(status["OPENROUTER_API_KEY"])
+        self.assertFalse(status["TAVILY_API_KEY"])
+        self.assertFalse(status["FIRECRAWL_API_KEY"])
+        self.assertNotIn("secret-value", repr(status))
+
     def test_release_ui_defaults_to_v3(self) -> None:
         self.assertEqual(getattr(app, "DEFAULT_VERSION", None), "v3")
 

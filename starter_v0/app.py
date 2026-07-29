@@ -4,6 +4,7 @@ import html
 import json
 import os
 import re
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -18,7 +19,11 @@ from chat import (
     trim_history,
     write_transcript,
 )
-from configuration import PROVIDER_SECRET_NAMES, resolve_secrets
+from configuration import (
+    PROVIDER_SECRET_NAMES,
+    configured_secret_names,
+    resolve_secrets,
+)
 from providers import make_provider
 from tools import load_tool_declarations, to_openai_tools
 from versioning import artifact_version_dict, build_artifact_version
@@ -43,6 +48,25 @@ SECRET_ENV_MARKERS = ("KEY", "TOKEN", "SECRET", "PASSWORD")
 
 def normalize_version_label(value: str) -> str:
     return value.strip() or DEFAULT_VERSION
+
+
+def setup_template(provider_name: str) -> str:
+    return "\n".join(
+        f'{name} = "PASTE_VALUE_HERE"'
+        for name in configured_secret_names(provider_name)
+    )
+
+
+def secret_status(
+    provider_name: str,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, bool]:
+    source = environ if environ is not None else os.environ
+    return {
+        name: bool(source.get(name))
+        for name in configured_secret_names(provider_name)
+    }
 
 
 def apply_theme() -> None:
