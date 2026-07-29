@@ -18,6 +18,7 @@ from chat import (
     trim_history,
     write_transcript,
 )
+from configuration import PROVIDER_SECRET_NAMES, resolve_secrets
 from providers import make_provider
 from tools import load_tool_declarations, to_openai_tools
 from versioning import artifact_version_dict, build_artifact_version
@@ -28,12 +29,7 @@ SYSTEM_PROMPT_PATH = ROOT / "artifacts" / "system_prompt.md"
 TOOLS_PATH = ROOT / "artifacts" / "tools.yaml"
 TRANSCRIPTS_DIR = ROOT / "transcripts"
 SUPPORTED_PROVIDERS = ("openrouter", "openai", "anthropic", "gemini")
-PROVIDER_ENV_VARS = {
-    "openrouter": "OPENROUTER_API_KEY",
-    "openai": "OPENAI_API_KEY",
-    "anthropic": "ANTHROPIC_API_KEY",
-    "gemini": "GEMINI_API_KEY",
-}
+PROVIDER_ENV_VARS = PROVIDER_SECRET_NAMES
 QUICK_PROMPTS = (
     ("AI today", "Find 3 important AI updates today and summarize them with sources."),
     ("Latest posts", "Find the latest 3 public X posts from @OpenAI and summarize them."),
@@ -582,6 +578,7 @@ def main() -> None:
         page_icon="🔎",
         layout="centered",
     )
+    resolve_secrets(st.secrets)
     apply_theme()
 
     provider, model_override, version_label = render_sidebar()
