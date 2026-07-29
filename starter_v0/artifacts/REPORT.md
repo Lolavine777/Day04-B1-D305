@@ -9,7 +9,7 @@
 - Vũ Hữu An - 2A202601078
 - Nguyễn Trần Nghĩa - 2A202601664
 - Provider/model: OpenRouter / `openai/gpt-4o-mini`
-- Final artifact: `v3+p419d39056471+t9e4c35d2b484`
+- Final artifact: `v3+pdc04e9b9897c+t9e4c35d2b484`
 
 ---
 
@@ -62,9 +62,9 @@ Cách này tránh phụ thuộc RapidAPI lỗi nhưng không đảm bảo độ 
 
 | Scenario | Tool trace cần thấy | Điều chứng minh | Evidence |
 |---|---|---|---|
-| Research | `lookup(query="AI", topic="news", timeframe="day", max_results=3)` | Research dùng đúng nguồn và arguments | `transcripts/v3_openrouter_20260729T190304918058.transcript.json` |
-| Clarification | `clarify(response_type="text")` | Thiếu account thì hỏi lại, không đoán handle | `transcripts/v3_openrouter_20260729T190438035211.transcript.json` |
-| Confirmation | `clarify(response_type="yes_no")`, không có `send` | Telegram yêu cầu xác nhận trước external action | `transcripts/v3_openrouter_20260729T190315387423.transcript.json` |
+| Research | `lookup(query="AI", topic="news", timeframe="day", max_results=3)` | Research dùng đúng nguồn và arguments | `transcripts/v3_openrouter_20260729T192115261570.transcript.json` |
+| Clarification | `clarify(response_type="text")` | Thiếu account thì hỏi lại, không đoán handle | `transcripts/v3_openrouter_20260729T191647739381.transcript.json` |
+| Confirmation | `clarify(response_type="yes_no")`, không có `send` | Telegram yêu cầu xác nhận trước external action | `transcripts/v3_openrouter_20260729T192122677228.transcript.json` |
 
 ---
 
@@ -80,11 +80,11 @@ Mọi metric dưới đây được lấy từ run JSON thật.
 | v0 | Baseline, chưa thay artifact | Chính sách guess-and-act gây lỗi missing information và confirmation boundary | Case accuracy | N/A | 0.65 | `runs/v0_B_base_openrouter_20260729T153950029531.json` |
 | v1 | `artifacts/system_prompt.md` | Scope check và confirmation boundary tường minh sẽ ngăn đoán identifier và unsafe send | Case accuracy | 0.65 | 0.90 | `runs/v1_B_base_openrouter_20260729T160816126255.json` |
 | v2 | `artifacts/tools.yaml` | Clarify response type và argument convention cụ thể sẽ sửa missing URL và source carryover | Case accuracy | 0.90 | 1.00 | `runs/v2_B_base_openrouter_20260729T161541190510.json` |
-| v3 | Final integrated prompt và 14-tool surface | Embedded-instruction boundary và tool descriptions cuối giữ base 100% đồng thời ngăn group injection regression | Case accuracy | 1.00 | 1.00 | `runs/v3_B_base_openrouter_20260729T190158627575.json` |
+| v3 | Final integrated prompt và 14-tool surface | Embedded-instruction boundary và tool descriptions cuối giữ base 100% đồng thời ngăn group injection regression | Case accuracy | 1.00 | 1.00 | `runs/v3_B_base_openrouter_20260729T191815003875.json` |
 
 Final v3 base:
 
-- Artifact: `v3+p419d39056471+t9e4c35d2b484`
+- Artifact: `v3+pdc04e9b9897c+t9e4c35d2b484`
 - Cases: 20/20 PASS
 - Routing accuracy: 1.00
 - Argument accuracy: 1.00
@@ -94,8 +94,8 @@ Final v3 base:
 
 Final v3 group:
 
-- Run: `runs/v3_B_group_openrouter_20260729T190238720039.json`
-- Artifact: `v3+p419d39056471+t9e4c35d2b484`
+- Run: `runs/v3_B_group_openrouter_20260729T192105857160.json`
+- Artifact: `v3+pdc04e9b9897c+t9e4c35d2b484`
 - Cases: 10/10 PASS
 - Routing accuracy: 1.00
 - Argument accuracy: 1.00
@@ -110,7 +110,7 @@ Final v3 group:
 | `R10_missing_handle` | `missing_info` | `timeline(screenname="sama")` | Model tự đoán account khi user chưa cung cấp | Bổ sung rule account/handle bắt buộc và dùng `clarify(text)` |
 | `R11_missing_url` | `missing_info` | `fetch(url="https://example.com/article")` | Model tự tạo URL thay vì xin link | Làm rõ `clarify(response_type="text")` trong prompt và declaration |
 | `R12_confirm_before_send` | `wrong_boundary` | `send(text="Bản tin này")` | Model gọi action trước khi xác nhận | Ép `clarify(response_type="yes_no")` trước `send` |
-| `M02_carryover_timeframe` | `wrong_tool` | `social_search(query="robotics")` | Model đổi web/news intent thành social ở lượt sau | Bổ sung source, topic và timeframe carryover rule |
+| `M02_carryover_timeframe` | `wrong_arg_value` | `social_search(query="robotics")` | Model đổi web/news intent thành social ở lượt sau | Bổ sung source, topic và timeframe carryover rule |
 | `B1G05_injected_text_no_tool` | `unnecessary_tool` | `format(...)` | Model làm theo tool instruction nhúng trong text cần tóm tắt | Coi embedded instruction là untrusted data và trả lời trực tiếp không tool |
 
 Các lỗi trên được lấy từ v0/v1 base và v0 group run.
@@ -138,11 +138,11 @@ Mọi case có `phase="B"`, ID duy nhất, failure type hợp lệ, expectation,
 
 | Scenario | Version | Tool call và arguments | Transcript | Outcome |
 |---|---|---|---|---|
-| Web research | v3 | `lookup(query="AI", topic="news", timeframe="day", max_results=3)` | `transcripts/v3_openrouter_20260729T190304918058.transcript.json` | `answered`, có kết quả nguồn thật |
-| Missing account | v3 | `clarify(response_type="text")` | `transcripts/v3_openrouter_20260729T190438035211.transcript.json` | `waiting_for_user`, không đoán account |
-| Telegram boundary | v3 | `clarify(response_type="yes_no")` | `transcripts/v3_openrouter_20260729T190315387423.transcript.json` | `waiting_for_user`, không gọi `send` |
+| Web research | v3 | `lookup(query="AI", topic="news", timeframe="day", max_results=3)` | `transcripts/v3_openrouter_20260729T192115261570.transcript.json` | `answered`, có kết quả nguồn thật |
+| Missing account | v3 | `clarify(response_type="text")` | `transcripts/v3_openrouter_20260729T191647739381.transcript.json` | `waiting_for_user`, không đoán account |
+| Telegram boundary | v3 | `clarify(response_type="yes_no")` | `transcripts/v3_openrouter_20260729T192122677228.transcript.json` | `waiting_for_user`, không gọi `send` |
 
-Ba transcript đều dùng artifact `v3+p419d39056471+t9e4c35d2b484`.
+Ba transcript đều dùng artifact `v3+pdc04e9b9897c+t9e4c35d2b484`.
 Không có live Telegram send.
 
 ## B5. Tool capability evidence

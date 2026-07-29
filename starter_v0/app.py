@@ -45,6 +45,10 @@ DEFAULT_VERSION = "v3"
 SECRET_ENV_MARKERS = ("KEY", "TOKEN", "SECRET", "PASSWORD")
 
 
+def normalize_version_label(value: str) -> str:
+    return value.strip() or DEFAULT_VERSION
+
+
 def apply_theme() -> None:
     st.markdown(
         """
@@ -513,14 +517,13 @@ def render_sidebar() -> tuple[str, str | None, str]:
             placeholder="Use provider default",
             disabled=locked,
         ).strip()
-        version_label = (
+        version_label = normalize_version_label(
             st.text_input(
                 "Version",
                 value=DEFAULT_VERSION,
                 disabled=locked,
                 help="Combined with the current prompt and tool hashes.",
-            ).strip()
-            or "v0"
+            )
         )
 
         active_provider = conversation["provider"] if locked else provider

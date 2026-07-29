@@ -14,6 +14,7 @@ from guardrails import (
     detect_injection,
     detect_sensitive_content,
     enforce_confirmation_boundary,
+    enforce_missing_timeline_boundary,
     fallback_hint,
     fallback_response,
     mask_pii,
@@ -129,6 +130,27 @@ class MaskPiiTests(unittest.TestCase):
 
 
 class CheckToolCallTests(unittest.TestCase):
+    def test_missing_timeline_account_becomes_clarify_tool(self) -> None:
+        calls = enforce_missing_timeline_boundary(
+            [{"role": "user", "content": "Tóm tắt 5 bài đăng mới nhất trên X giúp mình."}],
+            [],
+            "Bạn muốn xem tài khoản nào?",
+        )
+        self.assertEqual(calls[0].name, "clarify")
+        self.assertEqual(calls[0].args["response_type"], "text")
+
+    def test_named_social_topic_keeps_social_search(self) -> None:
+        original = ToolCall(
+            name="social_search",
+            args={"query": "OpenAI", "search_type": "Latest", "limit": 5},
+        )
+        calls = enforce_missing_timeline_boundary(
+            [{"role": "user", "content": "Tìm 5 bài đăng mới nhất trên X về OpenAI."}],
+            [original],
+            None,
+        )
+        self.assertEqual(calls, [original])
+
     def test_external_action_clarify_is_normalized_to_yes_no(self) -> None:
         call = enforce_confirmation_boundary(
             [{"role": "user", "content": "Đăng bản tin này lên Telegram giúp mình"}],

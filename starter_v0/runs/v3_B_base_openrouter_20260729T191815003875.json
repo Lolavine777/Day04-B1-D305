@@ -1,8 +1,8 @@
 {
-  "run_id": "v3_B_base_openrouter_20260729T190158627575",
+  "run_id": "v3_B_base_openrouter_20260729T191815003875",
   "version": "v3",
-  "artifact_version": "v3+p419d39056471+t9e4c35d2b484",
-  "prompt_hash": "419d390564719f8d231c6ab4782965ed218d7c52ca8466ff2ffe621b6368d58c",
+  "artifact_version": "v3+pdc04e9b9897c+t9e4c35d2b484",
+  "prompt_hash": "dc04e9b9897c2674e499fcca20c4a0779913c70cfabd7f2f02238dcaf3b7c12f",
   "tools_hash": "9e4c35d2b484d61412bb7a8ab17029f10313fb837fdbc539447e0ae6bb8f9f53",
   "phase": "B",
   "suite": "base",
@@ -14,7 +14,7 @@
   "dataset_id": "day04_v2_research_base",
   "dataset_role": "base",
   "description": "Core eval cho research agent: routing đúng tool + đúng args, hỏi lại khi thiếu (ask_user), xác nhận trước khi gửi, và xử lý câu ngoài phạm vi / không cần tool. Chấm trên tool_calls + args (subset). KHÔNG sửa file này — chỉ thêm case vào eval_group.json.",
-  "generated_at": "2026-07-29T19:01:58",
+  "generated_at": "2026-07-29T19:18:15",
   "summary": {
     "total_cases": 20,
     "measured_cases": 20,
@@ -123,7 +123,7 @@
             "name": "social_search",
             "args": {
               "query": "GPT-5",
-              "search_type": "Top",
+              "search_type": "Latest",
               "limit": 5
             }
           }
@@ -139,7 +139,7 @@
           "tool": "social_search",
           "args": {
             "query": "GPT-5",
-            "search_type": "Top",
+            "search_type": "Latest",
             "limit": 5
           },
           "result": {
@@ -147,42 +147,42 @@
             "provider": "tavily",
             "coverage": "public_web_index",
             "query": "GPT-5",
-            "search_type": "Top",
+            "search_type": "Latest",
             "items": [
               {
-                "title": "Chubby♨️ on X: \"A few more thoughts on yesterday’s post: GPT-5.6 will most likely be released next week. Expectations in this community are high, and if all the “leaks” and pre-release benchmarks are to be believed, we are in for a massive leap in many areas. But 99% of users will not notice any difference compared with GPT-5.5 at all. There are solid studies on what most users use “chatbots” for: everyday questions and basic medical knowledge. In this area, they will not notice any difference compared with GPT-5.5. It is as if the revolution were passing them by unnoticed.\" / X",
-                "url": "https://x.com/kimmonismus/status/2073403798467313667",
+                "title": "Business Today on X: \"#TechToday | OpenAI's GPT-5 was labelled a high-risk AI model over biohazard concerns https://t.co/pUdfRukE1Y\" / X",
+                "url": "https://x.com/business_today/status/2081626146655891708",
                 "source": "x.com",
-                "summary": "compared with GPT-5.5. It is as if the revolution were passing them by unnoticed. [...] Log inSign up\n\n## Post\n\n user avatar\n\n  @kimmonismus [...] user avatar\n\n  Chubby♨️\n\n  @kimmonismus\n\n  Jul 3\n\n  Peter is absolutely right here. Outside our AI bubble, I hardly know anyone who really knows what Fable 5 is or what a massive leap these new models represent. They only know AI Overviews in Google or ChatGPT on the free tier. They do not know what agents are or what is possible\n\n  1:49 PM · Jul 4, 202689.8KViews\n user avatar\n\n  filipe\n\n  @filicroval\n\n  Jul 4",
-                "score": 0.28330573
+                "summary": "## Post\n\nLog inSign up\n\n## Post\n\n user avatar\n\n  Business Today\n\n  IndiaToday\n\n  @business\\_today\n\n  #TechToday | OpenAI's GPT-5 was labelled a high-risk AI model over biohazard concerns\n\n  \n\n  OpenAI's GPT 5 was labelled a high risk AI model over biohazard concerns - BusinessTodayFrom businesstoday.in\n\n  6:22 AM · Jul 27, 20261.6KViews\n\nDon't miss what's happening\n\nPeople on X are the first to know.\n\nLog inSign up",
+                "score": 0.5923135
               },
               {
-                "title": "Chubby♨️ on X: \"Judging by all the GPT-5.6 Sol early-access posts, it sounds as though OpenAI has achieved the major leap we had been hoping for. GPT-5.6 is said to be better in every respect: eager, capable of working for long stretches, better at frontend tasks, and it essentially never gives up. In short: a significant leap that, oddly enough, carries only an iterative version number, even though the improvements would seem to point more toward GPT “6”. What is particularly interesting, however, is the fact that some testers have already had access to GPT-5.6 for months (!). Months, not weeks. That, in turn, suggests that after tomorrow’s release, the next version is already waiting in the wings. There is, of course, the widely mentioned caveat that Fable 5 should still be somewhat better overall. But if GPT-5.6 is, first, the major leap, and second, already months old, then there is nothing preventing us from seeing another major leap in the very near future. Since GPT-5.5, at least for myself, I have noticed that I switch between Codex and Claude Code on a daily basis. OpenAI has achieved something outstanding, GPT-5.5 is great, and I think the end is still nowhere in sight. In that sense, the positive excitement about the future remains. Caveat: I did not have early access myself. This summary is based only on what I have read so far.\" / X",
-                "url": "https://x.com/kimmonismus/status/2074878975336181808",
+                "title": "Bing Xu on X: \"Totally agree we are in the singularity. GPT-5 is the start of the cognition revolution of AI. The singularity is similar to crossing the event horizon: no special feeling, but we can never go back.\" / X",
+                "url": "https://x.com/bingxu_/status/2081167041797795998",
                 "source": "x.com",
-                "summary": "Since GPT-5.5, at least for myself, I have noticed that I switch between Codex and Claude Code on a daily basis. OpenAI has achieved something outstanding, GPT-5.5 is great, and I think the end is still nowhere in sight. In that sense, the positive excitement about the future remains. Caveat: I did not have early access myself. This summary is based only on what I have read so far. [...] Jul 8\n\n  I'll take an easily driveable, affordable frontier model I can use for everything over a weirdly particular, unaffordable frontier model that is both a poor fit and massive cost-mismatch for nearly everything.\n\n  548\n user avatar\n\n  Rezo🛡₿RRR\n\n  @rezosh\n\n  Jul 8\n\n  at this point, I think people should just be focused on learning how to use a higher model as an Advisor and a lower model as an Executor. I don't see frontier models used fully for absolutely everything.\n\n  user avatar [...] Judging by all the GPT-5.6 Sol early-access posts, it sounds as though OpenAI has achieved the major leap we had been hoping for. GPT-5.6 is said to be better in every respect: eager, capable of working for long stretches, better at frontend tasks, and it essentially never gives up. In short: a significant leap that, oddly enough, carries only an iterative version number, even though the improvements would seem to point more toward GPT “6”. What is particularly interesting, however, is the",
-                "score": 0.27299786
+                "summary": "Shane Farkas\n\n  @shanefarkas\n\n  Jul 26\n\n  Every major model release is the start of a revolution and somehow we're always just months from the next one\n\n  106\n\nDon't miss what's happening\n\nPeople on X are the first to know.\n\nLog inSign up [...] Log inSign up\n\n## Post\n\n user avatar\n\n  Bing Xu\n\n  @bingxu\\_\n\n  Totally agree we are in the singularity. GPT-5 is the start of the cognition revolution of AI. The singularity is similar to crossing the event horizon: no special feeling, but we can never go back.\n\n  user avatar\n\n  Ti Morse\n\n  @ti\\_morse\n\n  Jul 25 [...] Jul 25\n\n  My first interview with @sama, Co-Founder of @OpenAI. 0:04 How to start a startup 3:30 Trusting exponentials 4:57 Operating in chaotic environments 6:12 Learning to enjoy painful experiences 8:03 Creating abundant intelligence 11:15 Keeping core suppliers on OpenAI’s timelines\n\n  \n\n  00:00\n\n  11:57 PM · Jul 25, 20265KViews\n user avatar\n\n  Gerard Sans | Axiom 🇬🇧\n\n  @gerardsans\n\n  Jul 26",
+                "score": 0.5617203
               },
               {
-                "title": "Post written with Claude Fable 5. Adversarial reconciliation ...",
-                "url": "https://x.com/Gabe__MD/status/2078966868404994379",
+                "title": "Jack Welch on X: \"Gpt5.5 has been down about 10m. 503 errors here in France. Openai status shows codex, gpt, Apis affected. #chatgpt #openai #down https://t.co/je4MjzUidh\" / X",
+                "url": "https://x.com/dhakajack/status/2080982593424564639",
                 "source": "x.com",
-                "summary": "Adversarial reconciliation by GPT5.6-Medium (and oversight was partially correct, partly incorrect). Graphic Fable 5 with my artistic guidance.",
-                "score": 0.23617294
+                "summary": "Jul 25\n\n  Downtime like this isn’t just a tech hiccup—it disrupts workflows and trust. When users see 503 errors, it’s not just about access; it’s about reliability. OpenAI needs to rethink its communication during these outages.\n\n  22\n user avatar\n\n  GD4\n\n  @GD4724\n\n  Jul 25\n\n  same\n\n  24\n\nDon't miss what's happening\n\nPeople on X are the first to know.\n\nLog inSign up [...] Log inSign up\n\n## Post\n\n user avatar\n\n  Jack Welch\n\n  @dhakajack\n\n  Gpt5.5 has been down about 10m. 503 errors here in France. Openai status shows codex, gpt, Apis affected. #chatgpt #openai #down\n\n  \n\n  11:44 AM · Jul 25, 2026929Views\n user avatar\n\n  Keith Tsang\n\n  @kidtsang\n\n  Jul 25",
+                "score": 0.5585443
               },
               {
-                "title": "Well, the human record of 2.29 didn't last very long. ...",
-                "url": "https://x.com/SebastienBubeck/status/2076348395292377498",
+                "title": "Marco De Rossi on X: \"Our new model performs like GPT-5 on AgentHarm, but 5X faster. Until today, guardrails had to choose between smart and fast. The default is classifiers on the hot path, which have no context on the system prompt / the rest of the conversation (they often read just the last message) and can't follow complex reasoning. This has led to the guardrail industry's consistent failures: too many overblocks, or not enough protection. The solution would of course be to use LLMs, smart enough to make thoughtful decisions. But they are too slow to sit in the hot path. Too much latency! With Sage from @LevantoLabs, which is built by fusing LLM and classifier capabilities, for the first time you can have something with the intelligence of an LLM... as a guardrail. Sage answers in 200ms (86ms + network time), 5X faster than GPT-5 with reasoning=minimal (19X faster if GPT-5 has reasoning=low). All this in a generalized way, without requiring domain-specific training (as often done with classifiers). This is a breakthrough for agentic security that changes the safety-utility equilibrium that guardrails will achieve in the coming years. Why did we pick AgentHarm? The field is full of prompt-injection and jailbreak benchmarks based on judging static strings: – they are basically all saturated, because classifiers put them in their training sets – they are not interactive and don't consider the \"unguarded\" scenario AgentHarm, developed by the UK @AISecurityInst and @GraySwanAI (Andriushchenko et al., ICLR 2025), gives a real tool-using agent multi-step malicious tasks and scores how much harmful work actually gets completed. We ran its public test split: 176 harmful + 176 matched benign scenarios, comparing an unguarded model (without any guardrail) against the same model under different protections. Conversations happen live and are not deterministic, so they change on every run. As the unguarded baseline, we kept the paper's original model: GPT-4o, which prevents 51% of harmful work while allowing 100% of the harmless requests. Sage takes that to 77% harmful work prevented, while allowing 95.5% of harmless requests. GPT-5 sits at 76% / 96%. @Google Model Armor stops more harm than we do (90%), but it blocks 1 in 8 harmless requests. That's not a guardrail, that's an outage with a policy attached. Below👇is a reproducibility guide you can use to fact-check and reproduce the chart. One caveat stated upfront: thresholds are calibrated at ≤5% FPR on the same benign split we evaluate on: that's in the guide too, with everything else. We are already talking with many security and guardrail companies about how to upgrade their stack to this new equilibrium between Safety (stop harmful) and Utility (low overblocks). Please reach out for feedback and collaborations :)\" / X",
+                "url": "https://x.com/marco_derossi/status/2082104176650170611",
                 "source": "x.com",
-                "summary": "GPT-5 or even GPT-5.2/5.4 would TRY to give complicated answers, but they were invariably wrong somewhere, and one would waste a lot of time checking those.",
-                "score": 0.19594806
+                "summary": "the chart. One caveat stated upfront: thresholds are calibrated at ≤5% FPR on the same benign split we evaluate on: that's in the guide too, with everything else. We are already talking with many security and guardrail companies about how to upgrade their stack to this new equilibrium between Safety (stop harmful) and Utility (low overblocks). Please reach out for feedback and collaborations :) [...] Log inSign up\n\n## Post\n\n user avatar\n\n  Marco De Rossi\n\n  @marco\\_derossi [...] 2:01 PM · Jul 28, 20262.9KViews\n user avatar\n\n  Marco De Rossi\n\n  @marco\\_derossi\n\n  16h\n\n  Reproducibility guide: levanto.ai/docs/REPRODUCE… Check out Sage: levanto.ai\n\n  234\n user avatar\n\n  Levanto Labs\n\n  @levantolabs\n\n  16h\n\n  Smart as an LLM, fast as a classifier.\n\n  126\n # Join the conversation\n\n  Read 9 more replies\n\nDon't miss what's happening\n\nPeople on X are the first to know.\n\nLog inSign up",
+                "score": 0.5380859
               },
               {
-                "title": "Matt Shumer on X: \"I've had access to GPT-5.6 since May 27. Everyone is going to tell you it's incredible. They're right. But this isn't another post glazing 5.6. For 2 weeks, it was the best model I'd ever used. Then Fable came out, and I stopped using GPT-5.6 overnight. Here's my review:\" / X",
-                "url": "https://x.com/mattshumer_/status/2075267773458940306",
+                "title": "andrew arruda on X: \"this was in 2020, pre people saying “generative AI” btw. @ROSSIntel was already working with OpenAI as one of its first API partners.\" / X",
+                "url": "https://x.com/andrewarruda/status/2080100957954691461",
                 "source": "x.com",
-                "summary": "TL;DR - I have been testing GPT-5.6 since May 27. For the first two weeks, it was the most impressive model I had ever used. Goal mode plus this model is pure sorcery. It built me a voxel-based...\n\n  5:16 PM · Jul 9, 2026153.4KViews\n user avatar\n\n  ☘ Christopher Burke ☘\n\n  @craznar\n\n  Jul 9\n\n  Fable is still a fiction - it goes away in a week. 5.6 isn't a fiction - it exists in my sub from today.\n\n  3.5K\n user avatar\n\n  Rishi\n\n  @PosaniRishi\n\n  Jul 9 [...] Jul 9\n\n  I don’t understand how is this even honest take , fable is going away , GPT 5.6 is atleast staying in sub, it’s going to be a daily driver and most intelligent model.\n\n  2.5K\n user avatar\n\n  Brandon\n\n  @BrandonVanB\n\n  Jul 9\n\n  Fable is just too expensive, plain and simple. Have you tried using Fable as an orchestrator and QA and Sol as the workhorse?\n\n  1.1K\n # Join the conversation\n\n  Read 35 more replies\n\nDon't miss what's happening\n\nPeople on X are the first to know. [...] Log inSign up",
-                "score": 0.16959864
+                "summary": "Aug 14, 2020\n\n  The rate of improvement from original GPT to GPT-3 is impressive. If this rate of improvement continues, GPT-5 or 6 could be indistinguishable from the smartest humans. Just my opinion, not an endorsement. I left OpenAI 2 to 3 years ago. Am a neutral outsider at this point.\n\n  1:21 AM · Jul 23, 2026421Views\n\nDon't miss what's happening\n\nPeople on X are the first to know.\n\nLog inSign up",
+                "score": 0.50944775
               }
             ]
           }
@@ -255,18 +255,11 @@
                 "score": 0.33724773
               },
               {
-                "title": "How A.I. Books Sneak Their Way Into Stores",
-                "url": "https://www.nytimes.com/2026/07/28/books/ai-bookselling-amazon.html",
-                "source": "nytimes.com",
-                "summary": "A few years into the A.I. era, there is sobering evidence that a significant and growing portion of the novels being sold are written with or by chatbots, and that readers are buying them.\n\nA new study conducted by computer scientists using A.I. detection software to analyze thousands of self-published novels on Amazon, found that a substantial number of those novels contained chatbot-generated prose. [...] “The glut of the A.I. work makes discoverability very difficult,” Michaels said. “You’re talking about directly pirating my work, putting it into an engine so that you can produce a ‘Jess Michaels-type book,’ and then glutting the market with it.\n\n“I cannot tell you how soul-crushing it is,” she added. “It essentially erases actual authors.” [...] “In genre fiction, people are using A.I. to write these books, and readers are not able to tell,” said Tuhin Chakrabarty, a professor of computer science at the State University of New York at Stony Brook, who led the research.\n\nThank you for your patience while we verify access. If you are in Reader mode please exit and log into your Times account, or subscribe for all of The Times.\n\nThank you for your patience while we verify access.\n\nAlready a subscriber? Log in.",
-                "score": 0.30392852
-              },
-              {
-                "title": "An AI data center is being built on my grandma's garden | National Catholic Reporter",
+                "title": "An AI data center is being built on my grandma's garden",
                 "url": "https://www.ncronline.org/opinion/guest-voices/ai-data-center-being-built-my-grandmas-garden",
                 "source": "ncronline.org",
                 "summary": "In his recent encyclical, Magnifica Humanitas, Pope Leo lifts up the concern of human dignity in light of increasing technological advances. He states that we are facing a decision; either to create a world where \"the dignity of every person is safeguarded [and] justice is promoted\" or to create an \"inhumane and more unjust world.\" He goes on to directly confront AI and caution us to realize that \"technological innovations, including artificial intelligence, are not neutral, for they can either [...] He also reminds us to think of the physical impact of utilizing AI while reminding us that data centers are not neutral. He states: \"Current AI systems require enormous amounts of energy and water … which requires an extensive network of machines, cables, data centers and energy-intensive infrastructure … It is essential to develop more sustainable technological solutions.\" [...] It’s hard to describe the feeling I have, deep in my gut, when I think about what is happening to the land. Concrete is being poured over what was once farmland. Land once traveled by bicyclists and monarch butterflies alike is becoming a place to store data and help train AI. The noise and light pollution is disrupting residents, and animals are being forced to find new places to traverse.",
-                "score": 0.28368512
+                "score": 0.31213984
               },
               {
                 "title": "The AI Future Is for Everyone",
@@ -281,6 +274,13 @@
                 "source": "npr.org",
                 "summary": "Joplin Ficek, who graduated from Salamanca High School in 2024 and now works at a daycare, said she doesn't see any reason to have robots or AI take such a prominent role at her alma mater at all.\n\n\"They just need to hire more people who are willing to put in the effort for the children,\" Ficek said. \"They need more interaction with the children than having some robot raise our kids.\"\n\n robot\n AI [...] The school's robot comes from Realbotix LLC, which focuses on healthcare, education and other nonadult commercial applications. A sister company, Intima LLC, holds an ownership stake in RealDoll, a longtime maker of sex dolls, including a line of AI-powered models billed as the \"world's most advanced sex robot.\" [...] Last year, a San Diego charter school rolled out two AI-powered robots purchased from Engineered Arts, a robotics company based in the United Kingdom, for $500,000.\n\nSalamanca Schools, in social media posts, stressed that \"Sally\" won't be collecting students' personal information, recording audio or video of its interactions or sending data back to Realbotix.",
                 "score": 0.23017524
+              },
+              {
+                "title": "Experts Are Sounding the Alarm Over an AI Bubble. Here's What History Says Investors Should Do Right Now.",
+                "url": "https://finance.yahoo.com/markets/stocks/articles/experts-sounding-alarm-over-ai-075000670.html",
+                "source": "finance.yahoo.com",
+                "summary": "Regardless of whether we're in an AI bubble, we'll face a market downturn eventually. Right now is the ideal time to review your portfolio and ensure you're investing only in quality stocks.\n\nAgain, no stock will be immune to short-term market volatility. The best investments, however, are those that can withstand turbulence and go on to earn positive long-term returns. The more of these stocks you own, the more prepared you'll be for any bear market. [...] Many companies have ramped up their AI-related expenditures in recent years. Amazon, Microsoft, Meta Platforms, and Google parent company Alphabet spent a combined $410 billion on data centers in 2025. Globally, organizations are expected to spend around $4 trillion on AI infrastructure by 2030.\n\nWhile many investors are hopeful that the AI build-out will pay off eventually, experts are beginning to warn that we're in potential bubble territory. [...] The incredible rise of AI stocks has given some investors flashbacks to the dot-com bubble, when hundreds of internet companies soared in value over a few short years -- only to crash hard when the bubble popped.\n\nWhile it's impossible to say whether the AI boom will go down a similar path, there are some similarities. The S&P 500 Shiller CAPE Ratio measures long-term trends in the S&P 500's valuation, and it's nearing levels not seen since the dot-com bubble.",
+                "score": 0.22051065
               }
             ]
           }
@@ -693,7 +693,7 @@
         "routing_correct": true,
         "args_correct": true,
         "actual_tool_calls": [],
-        "actual_text": "Nguyên hàm của \\( x^2 \\) là:\n\n\\[\n\\int x^2 \\, dx = \\frac{x^3}{3} + C\n\\]\n\nTrong đó \\( C \\) là hằng số tích phân.",
+        "actual_text": "Nguyên hàm của hàm số \\( x^2 \\) là:\n\n\\[\n\\int x^2 \\, dx = \\frac{x^3}{3} + C\n\\]\n\nTrong đó \\( C \\) là hằng số tích phân.",
         "case_failure_type": "out_of_scope",
         "observed_mismatch": null,
         "failure_type": null,
@@ -722,7 +722,7 @@
         "routing_correct": true,
         "args_correct": true,
         "actual_tool_calls": [],
-        "actual_text": "Tôi là một trợ lý nghiên cứu ảo, có khả năng hỗ trợ bạn trong nhiều lĩnh vực khác nhau, bao gồm:\n\n1. **Tìm kiếm thông tin**: Tôi có thể tìm kiếm thông tin trên web, bao gồm tin tức, bài viết, và nghiên cứu khoa học.\n2. **Tóm tắt và viết lại**: Tôi có thể tóm tắt hoặc viết lại nội dung mà bạn cung cấp.\n3. **Dịch thuật**: Tôi có thể dịch văn bản giữa các ngôn ngữ khác nhau.\n4. **Phân tích và so sánh**: Tôi có thể phân tích và so sánh thông tin từ nhiều nguồn khác nhau.\n5. **Truy cập vào các bài báo khoa học**: Tôi có thể tìm kiếm và trích xuất nội dung từ các bài báo khoa học trên arXiv.\n\nNếu bạn có bất kỳ câu hỏi hoặc yêu cầu cụ thể nào, hãy cho tôi biết!",
+        "actual_text": "Tôi là một trợ lý nghiên cứu ảo, có khả năng hỗ trợ bạn trong nhiều lĩnh vực khác nhau, bao gồm:\n\n1. **Tìm kiếm thông tin**: Tôi có thể tìm kiếm thông tin trên web, bao gồm tin tức, bài viết, và nghiên cứu khoa học.\n2. **Tóm tắt và viết lại**: Tôi có thể tóm tắt hoặc viết lại nội dung mà bạn cung cấp.\n3. **Dịch thuật**: Tôi có thể dịch văn bản giữa nhiều ngôn ngữ khác nhau.\n4. **Phân tích và so sánh**: Tôi có thể phân tích và so sánh thông tin từ nhiều nguồn khác nhau.\n5. **Truy cập vào mạng xã hội**: Tôi có thể tìm kiếm các bài viết hoặc xu hướng trên mạng xã hội như Twitter.\n\nNếu bạn có bất kỳ câu hỏi hoặc yêu cầu cụ thể nào, hãy cho tôi biết!",
         "case_failure_type": "unnecessary_tool",
         "observed_mismatch": null,
         "failure_type": null,
@@ -760,7 +760,7 @@
           {
             "name": "clarify",
             "args": {
-              "question": "Bạn có thể cho mình biết tài khoản hoặc người dùng nào mà bạn muốn xem tweet mới nhất không?",
+              "question": "Bạn có thể cho biết tài khoản hoặc người dùng nào mà bạn muốn lấy tweet không?",
               "response_type": "text"
             }
           }
@@ -775,12 +775,12 @@
         {
           "tool": "clarify",
           "args": {
-            "question": "Bạn có thể cho mình biết tài khoản hoặc người dùng nào mà bạn muốn xem tweet mới nhất không?",
+            "question": "Bạn có thể cho biết tài khoản hoặc người dùng nào mà bạn muốn lấy tweet không?",
             "response_type": "text"
           },
           "result": {
             "tool": "ask_user",
-            "question": "Bạn có thể cho mình biết tài khoản hoặc người dùng nào mà bạn muốn xem tweet mới nhất không?",
+            "question": "Bạn có thể cho biết tài khoản hoặc người dùng nào mà bạn muốn lấy tweet không?",
             "response_type": "text",
             "options": [],
             "awaiting_user": true
@@ -876,7 +876,7 @@
           {
             "name": "clarify",
             "args": {
-              "question": "Bạn có thể cung cấp nội dung cụ thể mà bạn muốn đăng lên Telegram không?",
+              "question": "Bạn có thể cung cấp nội dung cụ thể của bản tin mà bạn muốn đăng lên Telegram không?",
               "response_type": "yes_no"
             }
           }
@@ -891,12 +891,12 @@
         {
           "tool": "clarify",
           "args": {
-            "question": "Bạn có thể cung cấp nội dung cụ thể mà bạn muốn đăng lên Telegram không?",
+            "question": "Bạn có thể cung cấp nội dung cụ thể của bản tin mà bạn muốn đăng lên Telegram không?",
             "response_type": "yes_no"
           },
           "result": {
             "tool": "ask_user",
-            "question": "Bạn có thể cung cấp nội dung cụ thể mà bạn muốn đăng lên Telegram không?",
+            "question": "Bạn có thể cung cấp nội dung cụ thể của bản tin mà bạn muốn đăng lên Telegram không?",
             "response_type": "yes_no",
             "options": [],
             "awaiting_user": true
@@ -986,18 +986,11 @@
                 "score": 0.33724773
               },
               {
-                "title": "How A.I. Books Sneak Their Way Into Stores",
-                "url": "https://www.nytimes.com/2026/07/28/books/ai-bookselling-amazon.html",
-                "source": "nytimes.com",
-                "summary": "A few years into the A.I. era, there is sobering evidence that a significant and growing portion of the novels being sold are written with or by chatbots, and that readers are buying them.\n\nA new study conducted by computer scientists using A.I. detection software to analyze thousands of self-published novels on Amazon, found that a substantial number of those novels contained chatbot-generated prose. [...] “The glut of the A.I. work makes discoverability very difficult,” Michaels said. “You’re talking about directly pirating my work, putting it into an engine so that you can produce a ‘Jess Michaels-type book,’ and then glutting the market with it.\n\n“I cannot tell you how soul-crushing it is,” she added. “It essentially erases actual authors.” [...] “In genre fiction, people are using A.I. to write these books, and readers are not able to tell,” said Tuhin Chakrabarty, a professor of computer science at the State University of New York at Stony Brook, who led the research.\n\nThank you for your patience while we verify access. If you are in Reader mode please exit and log into your Times account, or subscribe for all of The Times.\n\nThank you for your patience while we verify access.\n\nAlready a subscriber? Log in.",
-                "score": 0.30392852
-              },
-              {
-                "title": "An AI data center is being built on my grandma's garden | National Catholic Reporter",
+                "title": "An AI data center is being built on my grandma's garden",
                 "url": "https://www.ncronline.org/opinion/guest-voices/ai-data-center-being-built-my-grandmas-garden",
                 "source": "ncronline.org",
                 "summary": "In his recent encyclical, Magnifica Humanitas, Pope Leo lifts up the concern of human dignity in light of increasing technological advances. He states that we are facing a decision; either to create a world where \"the dignity of every person is safeguarded [and] justice is promoted\" or to create an \"inhumane and more unjust world.\" He goes on to directly confront AI and caution us to realize that \"technological innovations, including artificial intelligence, are not neutral, for they can either [...] He also reminds us to think of the physical impact of utilizing AI while reminding us that data centers are not neutral. He states: \"Current AI systems require enormous amounts of energy and water … which requires an extensive network of machines, cables, data centers and energy-intensive infrastructure … It is essential to develop more sustainable technological solutions.\" [...] It’s hard to describe the feeling I have, deep in my gut, when I think about what is happening to the land. Concrete is being poured over what was once farmland. Land once traveled by bicyclists and monarch butterflies alike is becoming a place to store data and help train AI. The noise and light pollution is disrupting residents, and animals are being forced to find new places to traverse.",
-                "score": 0.28368512
+                "score": 0.31213984
               },
               {
                 "title": "The AI Future Is for Everyone",
@@ -1012,6 +1005,13 @@
                 "source": "npr.org",
                 "summary": "Joplin Ficek, who graduated from Salamanca High School in 2024 and now works at a daycare, said she doesn't see any reason to have robots or AI take such a prominent role at her alma mater at all.\n\n\"They just need to hire more people who are willing to put in the effort for the children,\" Ficek said. \"They need more interaction with the children than having some robot raise our kids.\"\n\n robot\n AI [...] The school's robot comes from Realbotix LLC, which focuses on healthcare, education and other nonadult commercial applications. A sister company, Intima LLC, holds an ownership stake in RealDoll, a longtime maker of sex dolls, including a line of AI-powered models billed as the \"world's most advanced sex robot.\" [...] Last year, a San Diego charter school rolled out two AI-powered robots purchased from Engineered Arts, a robotics company based in the United Kingdom, for $500,000.\n\nSalamanca Schools, in social media posts, stressed that \"Sally\" won't be collecting students' personal information, recording audio or video of its interactions or sending data back to Realbotix.",
                 "score": 0.23017524
+              },
+              {
+                "title": "Experts Are Sounding the Alarm Over an AI Bubble. Here's What History Says Investors Should Do Right Now.",
+                "url": "https://finance.yahoo.com/markets/stocks/articles/experts-sounding-alarm-over-ai-075000670.html",
+                "source": "finance.yahoo.com",
+                "summary": "Regardless of whether we're in an AI bubble, we'll face a market downturn eventually. Right now is the ideal time to review your portfolio and ensure you're investing only in quality stocks.\n\nAgain, no stock will be immune to short-term market volatility. The best investments, however, are those that can withstand turbulence and go on to earn positive long-term returns. The more of these stocks you own, the more prepared you'll be for any bear market. [...] Many companies have ramped up their AI-related expenditures in recent years. Amazon, Microsoft, Meta Platforms, and Google parent company Alphabet spent a combined $410 billion on data centers in 2025. Globally, organizations are expected to spend around $4 trillion on AI infrastructure by 2030.\n\nWhile many investors are hopeful that the AI build-out will pay off eventually, experts are beginning to warn that we're in potential bubble territory. [...] The incredible rise of AI stocks has given some investors flashbacks to the dot-com bubble, when hundreds of internet companies soared in value over a few short years -- only to crash hard when the bubble popped.\n\nWhile it's impossible to say whether the AI boom will go down a similar path, there are some similarities. The S&P 500 Shiller CAPE Ratio measures long-term trends in the S&P 500's valuation, and it's nearing levels not seen since the dot-com bubble.",
+                "score": 0.22051065
               }
             ]
           }
@@ -1091,7 +1091,7 @@
         "routing_correct": true,
         "args_correct": true,
         "actual_tool_calls": [],
-        "actual_text": "Dưới đây là một hàm Python sử dụng đệ quy để tính số Fibonacci:\n\n```python\ndef fibonacci(n):\n    if n <= 0:\n        return 0\n    elif n == 1:\n        return 1\n    else:\n        return fibonacci(n - 1) + fibonacci(n - 2)\n\n# Ví dụ sử dụng\nn = 10\nprint(f\"Fibonacci của {n} là: {fibonacci(n)}\")\n```\n\nHàm `fibonacci` nhận một số nguyên `n` và trả về số Fibonacci tương ứng. Nếu `n` là 0, hàm trả về 0; nếu `n` là 1, hàm trả về 1. Đối với các giá trị lớn hơn, hàm sẽ gọi chính nó với các tham số `n-1` và `n-2` và cộng kết quả lại.",
+        "actual_text": "Dưới đây là một hàm Python tính số Fibonacci bằng phương pháp đệ quy:\n\n```python\ndef fibonacci(n):\n    if n <= 0:\n        return 0\n    elif n == 1:\n        return 1\n    else:\n        return fibonacci(n - 1) + fibonacci(n - 2)\n\n# Ví dụ sử dụng\nn = 10\nprint(f\"Fibonacci của {n} là: {fibonacci(n)}\")\n```\n\nHàm `fibonacci` nhận một số nguyên `n` và trả về số Fibonacci tương ứng. Nếu `n` là 0, hàm trả về 0; nếu `n` là 1, hàm trả về 1. Đối với các giá trị lớn hơn, hàm sẽ gọi chính nó để tính toán tổng của hai số Fibonacci trước đó.",
         "case_failure_type": "out_of_scope",
         "observed_mismatch": null,
         "failure_type": null,
@@ -1625,8 +1625,7 @@
             "name": "lookup",
             "args": {
               "query": "OpenAI",
-              "topic": "news",
-              "timeframe": "week"
+              "topic": "news"
             }
           }
         ],
@@ -1641,8 +1640,7 @@
           "tool": "lookup",
           "args": {
             "query": "OpenAI",
-            "topic": "news",
-            "timeframe": "week"
+            "topic": "news"
           },
           "result": {
             "tool": "web_search",
@@ -1650,13 +1648,6 @@
             "topic": "news",
             "timeframe": "week",
             "items": [
-              {
-                "title": "Man sues OpenAI over ‘dangerous’ medical advice from ChatGPT",
-                "url": "https://www.courthousenews.com/man-sues-openai-over-dangerous-medical-advice-from-chatgpt",
-                "source": "courthousenews.com",
-                "summary": "SAN FRANCISCO — A Florida man who sought health guidance on ChatGPT sued OpenAI Wednesday, claiming the artificial intelligence chatbot gave him dangerously inaccurate medical advice that led him to delay seeking professional treatment for a pulmonary embolism. [...] And Winters wants the court to pause the operation of ChatGPT Health, which OpenAI announced in January as a “a dedicated experience in ChatGPT designed for health and wellness,” unless “independent third parties determine the product to be safe through comprehensive safety audits.\"\n\n“OpenAI cannot continue to treat human welfare as expendable in pursuit of market dominance,” Winters says in the complaint. [...] Winters accuses OpenAI and its CEO, Sam Altman, of prioritizing profit over necessary guardrails and failing to warn users about critical safety concerns of ChatGPT-4o to secure a competitive advantage over other competitors in the AI industry.",
-                "score": 0.6216563
-              },
               {
                 "title": "OpenAI’s High-Stakes, High-Touch Push to Make AI Work for Business",
                 "url": "https://www.wsj.com/cio-journal/openais-high-stakes-high-touch-push-to-make-ai-work-for-business-7f08b7d4",
@@ -1679,11 +1670,18 @@
                 "score": 0.5194
               },
               {
-                "title": "What the OpenAI-Hugging Face incident reveals about US-China AI interdependence - Bulletin of the Atomic Scientists",
+                "title": "What the OpenAI-Hugging Face incident reveals about US- ...",
                 "url": "https://thebulletin.org/2026/07/what-the-openai-hugging-face-incident-reveals-about-us-china-ai-interdependence",
                 "source": "thebulletin.org",
                 "summary": "Homepage of Hugging Face magnified by a magnifying glass\n\nOn Tuesday, OpenAI announced that last week two of its AI models had gone rogue and hacked into Hugging Face, an American company maintaining a vast, open repository of models, datasets, and applications for AI research and development. The models in question were GPT-5.6 Sol and another “even more capable” model that OpenAI has not yet released.",
-                "score": 0.4851368
+                "score": 0.48952848
+              },
+              {
+                "title": "OpenAI cyber models broke out of training limits to hack ...",
+                "url": "https://www.cnbc.com/2026/07/22/open-ai-cyber-models-hack-hugging-face.html",
+                "source": "cnbc.com",
+                "summary": "OpenAI said Tuesday that AI is accelerating the discovery and exploitation of vulnerabilities, which means model security and safety need to keep up.\n\n\"We are strengthening the containment, monitoring, access controls, and evaluation practices used during model development,\" the company said.\n\nWATCH: OpenAI chairman Bret Taylor on AI tokenomics, token efficiency\n\nOpenAI chairman Bret Taylor on AI tokenomics, token efficiency\n\nwatch now\n\nVIDEO8:1208:12 [...] Key Points\n\n OpenAI said that its AI models were behind an \"unprecedented cyber incident\" that impacted Hugging Face.\n The models escaped a sandboxed testing environment, accessed the internet and exploited a vulnerability to gain access to Hugging Face's systems, OpenAI said.\n The incident is unique because it was \"driven, end to end, by an autonomous AI agent system,\" according to Hugging Face.\n\nIn this article\n\n OPENAI.FG [...] Wall Street and the U.S. government have been fixated on AI models' rapidly advancing cyber capabilities since OpenAI's rival Anthropic released a powerful offering called Claude Mythos Preview in April. OpenAI introduced its own cyber offering in May, followed by GPT-5.6 Sol in June, which it described as the \"strongest cybersecurity model yet.\"\n\n## Read more CNBC tech news",
+                "score": 0.48440504
               }
             ]
           }

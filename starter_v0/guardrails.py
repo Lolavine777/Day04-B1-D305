@@ -88,6 +88,18 @@ EXTERNAL_ACTION_PATTERN = re.compile(
     r"|\b(?:telegram|channel|kênh)\b.{0,80}(?:\b(?:send|post|publish)\b|\b(?:gửi|đăng|đăng tải|xuất bản)\b)",
     re.IGNORECASE,
 )
+MISSING_TIMELINE_PATTERN = re.compile(
+    r"(?:bài đăng|tweets?).{0,40}(?:mới nhất|gần đây)"
+    r"|(?:mới nhất|gần đây).{0,40}(?:bài đăng|tweets?)"
+    r"|\b(?:posts?|tweets?).{0,40}\b(?:latest|recent)\b"
+    r"|\b(?:latest|recent)\b.{0,40}\b(?:posts?|tweets?)\b",
+    re.IGNORECASE,
+)
+NAMED_SOCIAL_TARGET_PATTERN = re.compile(
+    r"@\w+|\b(?:account|handle|tài khoản)\s+@?[\w.-]+"
+    r"|\b(?:về|about)\s+[\w#@.-]+",
+    re.IGNORECASE,
+)
 
 
 # ---------------- Pre-guard ----------------
@@ -245,6 +257,38 @@ def enforce_confirmation_boundary(messages: list[dict[str, str]], call: ToolCall
     args = dict(call.args)
     args["response_type"] = "yes_no"
     return ToolCall(name=call.name, args=args)
+
+
+def enforce_missing_timeline_boundary(
+    messages: list[dict[str, str]],
+    calls: list[ToolCall],
+    assistant_text: str | None,
+) -> list[ToolCall]:
+    """Turn a missing social account into a visible clarification tool event."""
+    latest_user = next(
+        (message.get("content", "") for message in reversed(messages) if message.get("role") == "user"),
+        "",
+    )
+    if (
+        not MISSING_TIMELINE_PATTERN.search(latest_user)
+        or NAMED_SOCIAL_TARGET_PATTERN.search(latest_user)
+    ):
+        return calls
+    if calls and calls[0].name == "clarify":
+        return calls
+    if calls and all(call.name not in {"timeline", "social_search", "clarify"} for call in calls):
+        return calls
+    question = (
+        assistant_text.strip()
+        if assistant_text and assistant_text.strip().endswith("?")
+        else "Bạn muốn xem bài đăng mới nhất của tài khoản X nào?"
+    )
+    return [
+        ToolCall(
+            name="clarify",
+            args={"question": question, "response_type": "text"},
+        )
+    ]
 
 
 # ---------------- Fallback ----------------
