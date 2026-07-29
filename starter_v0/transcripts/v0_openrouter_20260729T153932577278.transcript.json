@@ -1,0 +1,69 @@
+{
+  "transcript_id": "v0_openrouter_20260729T153932577278",
+  "version": "v0",
+  "artifact_version": "v0+peb1c8179815b+t6cdb53d5d7b8",
+  "prompt_hash": "eb1c8179815bd79d34de7d326420bb99b3072e6e8ae96464c02d4411f905fc68",
+  "tools_hash": "6cdb53d5d7b8de80d60b298b1357f462cedbedfae261d5ba60b08ccc401687c5",
+  "provider": "openrouter",
+  "model": "openai/gpt-4o-mini",
+  "system_prompt": "artifacts\\system_prompt.md",
+  "tools": "artifacts\\tools.yaml",
+  "history_window": 5,
+  "max_tool_rounds": 4,
+  "created_at": "2026-07-29T15:39:32",
+  "updated_at": "2026-07-29T15:39:35",
+  "turns": [
+    {
+      "turn_index": 1,
+      "started_at": "2026-07-29T15:39:32",
+      "user": "Gửi nội dung 'Demo UI Team B1' lên Telegram.",
+      "status": "answered",
+      "assistant_text": "It seems that external sending is currently disabled, so I cannot send the message to Telegram. If you need assistance with anything else, feel free to let me know!",
+      "rounds": [
+        {
+          "round": 1,
+          "assistant_text": null,
+          "tool_calls": [
+            {
+              "name": "send",
+              "args": {
+                "text": "Demo UI Team B1"
+              }
+            }
+          ],
+          "tool_results": [
+            {
+              "tool": "send",
+              "args": {
+                "text": "Demo UI Team B1"
+              },
+              "result": {
+                "error": "live_send_disabled",
+                "message": "External sending is disabled in this verification scenario."
+              }
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "assistant_text": "It seems that external sending is currently disabled, so I cannot send the message to Telegram. If you need assistance with anything else, feel free to let me know!",
+          "tool_calls": [],
+          "tool_results": []
+        }
+      ],
+      "tool_events": [
+        {
+          "tool": "send",
+          "args": {
+            "text": "Demo UI Team B1"
+          },
+          "result": {
+            "error": "live_send_disabled",
+            "message": "External sending is disabled in this verification scenario."
+          }
+        }
+      ],
+      "ended_at": "2026-07-29T15:39:35"
+    }
+  ]
+}
