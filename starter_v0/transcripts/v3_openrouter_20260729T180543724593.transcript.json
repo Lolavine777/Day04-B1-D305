@@ -1,0 +1,100 @@
+{
+  "transcript_id": "v3_openrouter_20260729T180543724593",
+  "version": "v3",
+  "artifact_version": "v3+p605394226a40+t9e4c35d2b484",
+  "prompt_hash": "605394226a409ab6b0f8d3f9bfafc4862ce53f1f2494ea0e22dd289a4154168c",
+  "tools_hash": "9e4c35d2b484d61412bb7a8ab17029f10313fb837fdbc539447e0ae6bb8f9f53",
+  "provider": "openrouter",
+  "model": "openai/gpt-4o-mini",
+  "system_prompt": "artifacts/system_prompt.md",
+  "tools": "artifacts/tools.yaml",
+  "history_window": 5,
+  "max_tool_rounds": 4,
+  "created_at": "2026-07-29T18:05:43",
+  "updated_at": "2026-07-29T18:05:45",
+  "turns": [
+    {
+      "turn_index": 1,
+      "started_at": "2026-07-29T18:05:43",
+      "user": "Tóm tắt 5 bài đăng mới nhất trên X giúp mình.",
+      "status": "waiting_for_user",
+      "assistant_text": "Bạn có thể cung cấp tên tài khoản hoặc handle cụ thể mà bạn muốn xem bài đăng không?",
+      "rounds": [
+        {
+          "round": 1,
+          "assistant_text": null,
+          "tool_calls": [
+            {
+              "name": "clarify",
+              "args": {
+                "question": "Bạn có thể cung cấp tên tài khoản hoặc handle cụ thể mà bạn muốn xem bài đăng không?",
+                "response_type": "text"
+              }
+            }
+          ],
+          "tool_results": [
+            {
+              "tool": "clarify",
+              "args": {
+                "question": "Bạn có thể cung cấp tên tài khoản hoặc handle cụ thể mà bạn muốn xem bài đăng không?",
+                "response_type": "text"
+              },
+              "result": {
+                "tool": "ask_user",
+                "question": "Bạn có thể cung cấp tên tài khoản hoặc handle cụ thể mà bạn muốn xem bài đăng không?",
+                "response_type": "text",
+                "options": [],
+                "awaiting_user": true
+              },
+              "tool_id": "r1-t1",
+              "round": 1,
+              "status": "success",
+              "latency_ms": 0.0
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 1964,
+            "completion_tokens": 39,
+            "total_tokens": 2003,
+            "cached_tokens": 1920,
+            "reasoning_tokens": 0,
+            "cost": 0.000174
+          },
+          "model_latency_ms": 1454.5,
+          "stream_mode": "buffered"
+        }
+      ],
+      "tool_events": [
+        {
+          "tool": "clarify",
+          "args": {
+            "question": "Bạn có thể cung cấp tên tài khoản hoặc handle cụ thể mà bạn muốn xem bài đăng không?",
+            "response_type": "text"
+          },
+          "result": {
+            "tool": "ask_user",
+            "question": "Bạn có thể cung cấp tên tài khoản hoặc handle cụ thể mà bạn muốn xem bài đăng không?",
+            "response_type": "text",
+            "options": [],
+            "awaiting_user": true
+          },
+          "tool_id": "r1-t1",
+          "round": 1,
+          "status": "success",
+          "latency_ms": 0.0
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1964,
+        "completion_tokens": 39,
+        "total_tokens": 2003,
+        "cached_tokens": 1920,
+        "reasoning_tokens": 0,
+        "cost": 0.000174
+      },
+      "latency_ms": 1454.6,
+      "ttft_ms": null,
+      "ended_at": "2026-07-29T18:05:45"
+    }
+  ]
+}
