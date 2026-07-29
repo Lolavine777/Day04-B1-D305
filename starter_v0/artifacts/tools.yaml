@@ -129,3 +129,61 @@ tools:
           items:
             type: object
       required: [items]
+
+  - name: compare_sources
+    description: "Compare structured claims from research items already collected. Report agreement and conflicting values by claim. Never use this as an initial search or as proof that a source is correct."
+    parameters:
+      type: object
+      properties:
+        items:
+          type: array
+          default: []
+          description: "Collected source items. Each item should include source, optional url, and a claims object mapping claim names to reported values."
+          items:
+            type: object
+            properties:
+              source: {type: string}
+              url: {type: string}
+              title: {type: string}
+              claims:
+                type: object
+                description: "Structured claim-name to reported-value mapping."
+      required: [items]
+
+  - name: citation_audit
+    description: "Audit citations after claims have been assembled. Check each claim for non-empty text, a valid HTTP(S) URL, and a named source. This does not open URLs or prove that a citation supports a claim."
+    parameters:
+      type: object
+      properties:
+        claims:
+          type: array
+          default: []
+          description: "Claims and their citations to validate."
+          items:
+            type: object
+            properties:
+              text: {type: string, description: "Claim text."}
+              url: {type: string, description: "Citation URL."}
+              source: {type: string, description: "Named source or publisher."}
+      required: [claims]
+
+  - name: export_report
+    description: "Render already-collected research items into a final Markdown or JSON report. Returns content only; it does not write a file, search, verify citations, or send externally."
+    parameters:
+      type: object
+      properties:
+        title: {type: string, default: "", description: "Report title. Defaults to Research Report."}
+        items:
+          type: array
+          default: []
+          description: "Final research items in desired output order."
+          items:
+            type: object
+            properties:
+              section: {type: string}
+              title: {type: string}
+              summary: {type: string}
+              source: {type: string}
+              url: {type: string}
+        format: {type: string, enum: [markdown, json], default: "markdown", description: "Output serialization format."}
+      required: [items, format]
