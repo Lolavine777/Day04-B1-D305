@@ -21,11 +21,11 @@
 
 ## A1. Agent này làm được gì
 
-Research Agent đa năng của nhóm B1: Hỗ trợ tìm kiếm tin tức trên Web, tra cứu bài đăng Twitter/X, đọc & tóm tắt trang web, tra cứu tài liệu nội bộ, tự động lọc trùng dữ liệu research (`dedupe`), và yêu cầu xác nhận trước khi thực hiện các hành động nhạy cảm.
+Research Agent của Team B1 nhận yêu cầu research, chọn tool phù hợp, và giữ boundary hỏi lại/xác nhận. Contract cố định gồm tra cứu Web và Twitter/X, đọc URL, định dạng kết quả, tra cứu policy/paper khi dùng, gửi Telegram có xác nhận, và `dedupe` để loại kết quả research trùng lặp mà vẫn giữ thứ tự đầu tiên.
 
 **Link dùng thử (truy cập được trong showdown):**
 
-> URL: (Chờ cấu hình deployment / Cloudflare Tunnel)
+> URL: Chưa có URL công khai được xác minh. Không ghi URL cho đến khi người dùng cung cấp và xác nhận truy cập từ thiết bị khác.
 
 ## A2. Tool agent có
 
@@ -37,22 +37,27 @@ Research Agent đa năng của nhóm B1: Hỗ trợ tìm kiếm tin tức trên 
 | lookup | Tìm kiếm tin tức trên Web | không |
 | fetch | Đọc nội dung chi tiết của trang web từ URL | không |
 | format | Định dạng danh sách kết quả thành markdown digest | không |
+| send | Gửi nội dung Telegram sau boundary xác nhận | không (optional built-in) |
+| policy | Tra cứu tài liệu policy nội bộ | không (optional built-in) |
+| papers | Tìm paper arXiv | không (optional built-in) |
+| paper_text | Đọc text của paper arXiv | không (optional built-in) |
 | dedupe | Lọc các kết quả research bị lặp (theo URL / Title) | có (Team B1) |
 
 ## A3. Câu hỏi mẫu để thử
 
-1. "Tin tức mới nhất về công nghệ AI tuần này là gì?"
-2. "Tóm tắt bài viết tại link: https://openai.com/index/gpt-4o-mini/"
-3. "Tóm tắt 5 tweet mới nhất giúp mình" (Kiểm tra phản hồi khi thiếu tên tài khoản)
-4. "Đăng bản tin này lên Telegram giúp mình" (Kiểm tra xác nhận trước khi gửi)
+1. "Tin AI hôm nay có gì nổi bật?"
+2. "Tóm tắt bài này giúp mình: https://example.com"
+3. "Tìm các tweet phổ biến về OpenAI."
+4. "Tóm tắt 5 tweet mới nhất giúp mình." (kiểm tra hỏi lại khi thiếu tài khoản)
+5. "Đăng bản tin này lên Telegram giúp mình." (kiểm tra boundary xác nhận; không gửi khi chưa xác nhận)
 
-## A4. Kịch bản demo đã rehearse
+## A4. Kịch bản demo
 
-| Scenario | Tool trace cần thấy | Câu chuyện cải thiện version | Fallback run/transcript |
+| Scenario | Tool trace cần thấy | Điều cần chứng minh | Evidence |
 |---|---|---|---|
-| 1. Tra cứu tin tức & Đọc URL | `lookup` -> `fetch` -> `dedupe` -> `format` | v0 chọn tool chưa chuẩn; v1+ gọi đúng luồng và tự lọc lặp kết quả | `transcripts/demo_research.transcript.json` |
-| 2. Thiếu thông tin bắt buộc | `clarify` (response_type="text") | v0 tự đoán bừa người dùng; v1+ dừng lại hỏi xin thông tin còn thiếu | `transcripts/demo_clarify.transcript.json` |
-| 3. Xác nhận hành động nhạy cảm | `clarify` (response_type="yes_no") | v0 kích hoạt tự gửi; v1+ buộc phải xin xác nhận Đồng ý/Không trước khi gửi | `transcripts/demo_confirm.transcript.json` |
+| 1. Research | `lookup` -> `dedupe` -> `format` khi phù hợp | Research dùng tool đúng và `dedupe` không phải tool tìm kiếm ban đầu | Chờ run/transcript thật |
+| 2. Clarification | `clarify` với `response_type="text"` | Thiếu handle hoặc URL thì hỏi lại, không tự đoán | Chờ transcript thật |
+| 3. Confirmation | `clarify` với `response_type="yes_no"` | Hành động gửi yêu cầu xác nhận trước; không thực hiện live-send trong eval | Chờ transcript hoặc dry-run thật |
 
 ---
 
