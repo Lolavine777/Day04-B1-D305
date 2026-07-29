@@ -265,13 +265,17 @@ def enforce_missing_timeline_boundary(
     assistant_text: str | None,
 ) -> list[ToolCall]:
     """Turn a missing social account into a visible clarification tool event."""
-    latest_user = next(
-        (message.get("content", "") for message in reversed(messages) if message.get("role") == "user"),
-        "",
-    )
+    user_messages = [
+        message.get("content", "")
+        for message in messages
+        if message.get("role") == "user"
+    ]
+    latest_user = user_messages[-1] if user_messages else ""
+    prior_user_context = "\n".join(user_messages[:-1])
     if (
         not MISSING_TIMELINE_PATTERN.search(latest_user)
         or NAMED_SOCIAL_TARGET_PATTERN.search(latest_user)
+        or NAMED_SOCIAL_TARGET_PATTERN.search(prior_user_context)
     ):
         return calls
     if calls and calls[0].name == "clarify":

@@ -151,6 +151,22 @@ class CheckToolCallTests(unittest.TestCase):
         )
         self.assertEqual(calls, [original])
 
+    def test_prior_account_handle_keeps_timeline_call(self) -> None:
+        original = ToolCall(
+            name="timeline",
+            args={"screenname": "OpenAI", "limit": 5},
+        )
+        calls = enforce_missing_timeline_boundary(
+            [
+                {"role": "user", "content": "Dùng tài khoản @OpenAI nhé."},
+                {"role": "assistant", "content": "Đã ghi nhận."},
+                {"role": "user", "content": "Tóm tắt 5 bài đăng mới nhất giúp mình."},
+            ],
+            [original],
+            None,
+        )
+        self.assertEqual(calls, [original])
+
     def test_external_action_clarify_is_normalized_to_yes_no(self) -> None:
         call = enforce_confirmation_boundary(
             [{"role": "user", "content": "Đăng bản tin này lên Telegram giúp mình"}],
