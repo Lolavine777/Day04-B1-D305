@@ -4,6 +4,7 @@ import html
 import json
 import os
 import re
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -18,6 +19,11 @@ from chat import (
     trim_history,
     write_transcript,
 )
+from configuration import (
+    PROVIDER_SECRET_NAMES,
+    configured_secret_names,
+    resolve_secrets,
+)
 from providers import make_provider
 from tools import load_tool_declarations, to_openai_tools
 from versioning import artifact_version_dict, build_artifact_version
@@ -28,12 +34,7 @@ SYSTEM_PROMPT_PATH = ROOT / "artifacts" / "system_prompt.md"
 TOOLS_PATH = ROOT / "artifacts" / "tools.yaml"
 TRANSCRIPTS_DIR = ROOT / "transcripts"
 SUPPORTED_PROVIDERS = ("openrouter", "openai", "anthropic", "gemini")
-PROVIDER_ENV_VARS = {
-    "openrouter": "OPENROUTER_API_KEY",
-    "openai": "OPENAI_API_KEY",
-    "anthropic": "ANTHROPIC_API_KEY",
-    "gemini": "GEMINI_API_KEY",
-}
+PROVIDER_ENV_VARS = PROVIDER_SECRET_NAMES
 QUICK_PROMPTS = (
     ("AI today", "Find 3 important AI updates today and summarize them with sources."),
     ("Latest posts", "Find the latest 3 public X posts from @OpenAI and summarize them."),
@@ -49,185 +50,285 @@ def normalize_version_label(value: str) -> str:
     return value.strip() or DEFAULT_VERSION
 
 
-def apply_theme() -> None:
-    st.markdown(
-        """
-        <style>
-        :root {
-            --agent-ink: #172033;
-            --agent-muted: #667085;
-            --agent-border: rgba(97, 114, 146, 0.16);
-            --agent-card: rgba(255, 255, 255, 0.84);
-            --agent-primary: #5b5bd6;
-            --agent-accent: #0f9f8f;
-        }
-
-        .stApp {
-            background:
-                radial-gradient(circle at 12% 0%, rgba(91, 91, 214, 0.11), transparent 28rem),
-                radial-gradient(circle at 92% 8%, rgba(15, 159, 143, 0.10), transparent 25rem),
-                #f7f8fc;
-            color: var(--agent-ink);
-        }
-
-        header[data-testid="stHeader"] {
-            background: transparent;
-        }
-
-        [data-testid="stToolbar"],
-        [data-testid="stDecoration"],
-        .stAppDeployButton,
-        #MainMenu,
-        footer {
-            display: none !important;
-        }
-
-        .block-container {
-            max-width: 940px;
-            padding-top: 2.6rem;
-            padding-bottom: 7rem;
-        }
-
-        [data-testid="stSidebar"] {
-            background: rgba(244, 246, 251, 0.95);
-            border-right: 1px solid var(--agent-border);
-        }
-
-        [data-testid="stSidebar"] > div:first-child {
-            padding-top: 1.5rem;
-        }
-
-        h1 {
-            color: var(--agent-ink);
-            font-size: clamp(2rem, 5vw, 3.2rem) !important;
-            letter-spacing: -0.045em !important;
-            margin-bottom: 0.25rem !important;
-        }
-
-        .agent-kicker {
-            color: var(--agent-primary);
-            font-size: 0.75rem;
-            font-weight: 750;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            margin-bottom: 0.3rem;
-        }
-
-        .agent-subtitle {
-            color: var(--agent-muted);
-            font-size: 1.02rem;
-            margin-bottom: 1rem;
-        }
-
-        .agent-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin: 0.25rem 0 1.4rem;
-        }
-
-        .agent-chip {
-            align-items: center;
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid var(--agent-border);
-            border-radius: 999px;
-            color: #46516a;
-            display: inline-flex;
-            font-size: 0.78rem;
-            font-weight: 650;
-            gap: 0.4rem;
-            padding: 0.38rem 0.72rem;
-        }
-
-        .agent-dot {
-            background: #f59e0b;
-            border-radius: 50%;
-            height: 0.48rem;
-            width: 0.48rem;
-        }
-
-        .agent-dot.ready {
-            background: #12b76a;
-            box-shadow: 0 0 0 3px rgba(18, 183, 106, 0.12);
-        }
-
-        .agent-empty {
-            background: linear-gradient(145deg, rgba(255,255,255,0.94), rgba(246,248,255,0.86));
-            border: 1px solid var(--agent-border);
-            border-radius: 1.25rem;
-            box-shadow: 0 18px 55px rgba(37, 51, 84, 0.07);
-            margin: 1rem 0;
-            padding: 1.35rem 1.45rem;
-        }
-
-        .agent-empty strong {
-            color: var(--agent-ink);
-            display: block;
-            font-size: 1.05rem;
-            margin-bottom: 0.3rem;
-        }
-
-        .agent-empty span {
-            color: var(--agent-muted);
-            font-size: 0.9rem;
-        }
-
-        [data-testid="stChatMessage"] {
-            background: var(--agent-card);
-            border: 1px solid var(--agent-border);
-            border-radius: 1.1rem;
-            box-shadow: 0 10px 30px rgba(45, 55, 90, 0.045);
-            margin-bottom: 0.85rem;
-            padding: 0.25rem 0.35rem;
-        }
-
-        [data-testid="stExpander"] {
-            background: rgba(255, 255, 255, 0.66);
-            border: 1px solid var(--agent-border);
-            border-radius: 0.9rem;
-        }
-
-        [data-testid="stChatInput"] {
-            background: rgba(255,255,255,0.92);
-            border: 1px solid rgba(91, 91, 214, 0.22);
-            border-radius: 1rem;
-            box-shadow: 0 16px 44px rgba(52, 59, 112, 0.12);
-        }
-
-        .stButton > button,
-        .stDownloadButton > button {
-            border-color: var(--agent-border);
-            border-radius: 0.8rem;
-            min-height: 2.65rem;
-            transition: border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
-        }
-
-        .stButton > button:hover,
-        .stDownloadButton > button:hover {
-            border-color: rgba(91, 91, 214, 0.48);
-            box-shadow: 0 8px 24px rgba(91, 91, 214, 0.10);
-            transform: translateY(-1px);
-        }
-
-        div[data-testid="stStatusWidget"] {
-            border-radius: 1rem;
-        }
-
-        @media (max-width: 640px) {
-            .block-container {
-                padding-left: 1rem;
-                padding-right: 1rem;
-                padding-top: 1.6rem;
-            }
-
-            .agent-chips {
-                gap: 0.35rem;
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
+def setup_template(provider_name: str) -> str:
+    return "\n".join(
+        f'{name} = "PASTE_VALUE_HERE"'
+        for name in configured_secret_names(provider_name)
     )
+
+
+def secret_status(
+    provider_name: str,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, bool]:
+    source = environ if environ is not None else os.environ
+    return {
+        name: bool(source.get(name))
+        for name in configured_secret_names(provider_name)
+    }
+
+
+def setup_panel_payload(
+    provider_name: str,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, str] | None:
+    provider_key = PROVIDER_ENV_VARS[provider_name]
+    if secret_status(provider_name, environ=environ)[provider_key]:
+        return None
+    return {
+        "provider_key": provider_key,
+        "template": setup_template(provider_name),
+    }
+
+
+THEME_CSS = """
+:root {
+    --agent-bg: #f3f0e8;
+    --agent-surface: #fffdf8;
+    --agent-surface-muted: #ebe8df;
+    --agent-ink: #17211f;
+    --agent-muted: #66716c;
+    --agent-border: #d6d2c7;
+    --agent-primary: #0f766e;
+    --agent-primary-soft: #dcefeb;
+    --agent-warning: #a15c16;
+}
+
+.stApp {
+    background: var(--agent-bg);
+    color: var(--agent-ink);
+}
+
+.stApp,
+.stApp p,
+.stApp label,
+.stApp li,
+.stApp span {
+    color: var(--agent-ink);
+}
+
+header[data-testid="stHeader"] {
+    background: transparent;
+}
+
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+.stAppDeployButton,
+#MainMenu,
+footer {
+    display: none !important;
+}
+
+.block-container {
+    max-width: 960px;
+    padding-top: 1.75rem;
+    padding-bottom: 0.75rem;
+}
+
+[data-testid="stSidebar"] {
+    background: #e9e5db;
+    border-right: 1px solid var(--agent-border);
+}
+
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: 1.25rem;
+}
+
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span {
+    color: var(--agent-ink);
+}
+
+h1 {
+    color: var(--agent-ink);
+    font-size: clamp(2rem, 4vw, 2.65rem) !important;
+    letter-spacing: -0.035em !important;
+    line-height: 1.05 !important;
+    margin-bottom: 0.35rem !important;
+}
+
+h2,
+h3 {
+    color: var(--agent-ink);
+    letter-spacing: -0.02em;
+}
+
+.agent-kicker {
+    color: var(--agent-primary) !important;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.13em;
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+}
+
+.agent-subtitle {
+    color: var(--agent-muted) !important;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    max-width: 42rem;
+}
+
+.agent-status-grid {
+    border-bottom: 1px solid var(--agent-border);
+    border-top: 1px solid var(--agent-border);
+    display: flex;
+    flex-wrap: wrap;
+    margin: 1rem 0 1.25rem;
+}
+
+.agent-status {
+    align-items: center;
+    border-right: 1px solid var(--agent-border);
+    color: var(--agent-muted) !important;
+    display: inline-flex;
+    font-size: 0.78rem;
+    gap: 0.4rem;
+    margin-right: 0.9rem;
+    padding: 0.65rem 0.9rem 0.65rem 0;
+}
+
+.agent-status:last-child {
+    border-right: 0;
+}
+
+.agent-status-mark {
+    background: var(--agent-warning);
+    border-radius: 50%;
+    display: inline-block;
+    height: 0.48rem;
+    width: 0.48rem;
+}
+
+.agent-status-mark.ready {
+    background: var(--agent-primary);
+}
+
+.agent-setup {
+    background: #fff8e9;
+    border: 1px solid #dfc99f;
+    border-left: 4px solid var(--agent-warning);
+    border-radius: 8px;
+    margin: 0.75rem 0 1.25rem;
+    padding: 1rem 1.1rem;
+}
+
+.agent-setup strong,
+.agent-empty strong {
+    color: var(--agent-ink);
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.agent-setup span,
+.agent-empty span {
+    color: var(--agent-muted) !important;
+    font-size: 0.9rem;
+}
+
+.agent-empty {
+    border-bottom: 1px solid var(--agent-border);
+    margin: 0.75rem 0 1rem;
+    padding: 0.85rem 0 1.1rem;
+}
+
+[data-baseweb="select"] > div,
+[data-baseweb="input"] > div,
+[data-testid="stTextInput"] input,
+[data-testid="stChatInput"] textarea {
+    background: var(--agent-surface) !important;
+    color: var(--agent-ink) !important;
+}
+
+[data-baseweb="select"] svg,
+[data-testid="stTextInput"] svg,
+[data-testid="stChatInput"] svg {
+    fill: var(--agent-ink) !important;
+}
+
+.stButton > button,
+.stDownloadButton > button {
+    background: var(--agent-surface) !important;
+    border: 1px solid var(--agent-border) !important;
+    border-radius: 8px;
+    color: var(--agent-ink) !important;
+    min-height: 2.55rem;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.stButton > button p,
+.stDownloadButton > button p {
+    color: inherit !important;
+}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+    background: var(--agent-primary-soft) !important;
+    border-color: var(--agent-primary) !important;
+    color: #0b5d56 !important;
+}
+
+.stButton > button:focus-visible,
+.stDownloadButton > button:focus-visible,
+[data-baseweb="select"] > div:focus-within,
+[data-baseweb="input"] > div:focus-within,
+[data-testid="stChatInput"]:focus-within {
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18) !important;
+    outline: none !important;
+}
+
+[data-testid="stChatMessage"] {
+    background: var(--agent-surface);
+    border: 1px solid var(--agent-border);
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    padding: 0.2rem 0.3rem;
+}
+
+[data-testid="stExpander"] {
+    background: rgba(255, 253, 248, 0.72);
+    border: 1px solid var(--agent-border);
+    border-radius: 8px;
+}
+
+[data-testid="stChatInput"] {
+    background: var(--agent-surface);
+    border: 1px solid var(--agent-border);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(49, 58, 54, 0.10);
+}
+
+[data-testid="stChatInput"] button {
+    color: var(--agent-primary) !important;
+}
+
+code {
+    color: #0b5d56 !important;
+}
+
+@media (max-width: 640px) {
+    .block-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-top: 1.2rem;
+    }
+
+    .agent-status {
+        border-right: 0;
+        padding-bottom: 0.35rem;
+        padding-top: 0.35rem;
+    }
+}
+"""
+
+
+def apply_theme() -> None:
+    st.markdown(f"<style>{THEME_CSS}</style>", unsafe_allow_html=True)
 
 
 def provider_is_configured(provider_name: str) -> bool:
@@ -473,7 +574,7 @@ def render_turn(turn: dict[str, Any]) -> None:
             st.error(turn.get("error", "Provider request failed."))
         elif status == "fallback":
             st.warning(
-                "Backend không khả dụng — phản hồi bên dưới là câu trả lời "
+                "Backend không khả dụng - phản hồi bên dưới là câu trả lời "
                 "mặc định của chế độ dự phòng."
             )
             if turn.get("error"):
@@ -500,8 +601,8 @@ def render_sidebar() -> tuple[str, str | None, str]:
     locked = conversation is not None
 
     with st.sidebar:
-        st.markdown('<p class="agent-kicker">Workspace</p>', unsafe_allow_html=True)
-        st.header("Run settings")
+        st.markdown('<p class="agent-kicker">Configuration</p>', unsafe_allow_html=True)
+        st.header("Research run")
         if locked and st.button("＋ New conversation", use_container_width=True):
             clear_conversation()
             st.rerun()
@@ -527,23 +628,26 @@ def render_sidebar() -> tuple[str, str | None, str]:
         )
 
         active_provider = conversation["provider"] if locked else provider
-        configured = provider_is_configured(active_provider)
-        state_class = "ready" if configured else ""
-        state_label = "Ready" if configured else "Missing API key"
+        status = secret_status(active_provider)
+        provider_key = PROVIDER_ENV_VARS[active_provider]
+        st.divider()
+        st.markdown('<p class="agent-kicker">System status</p>', unsafe_allow_html=True)
         st.markdown(
             (
-                '<div class="agent-chips">'
-                f'<span class="agent-chip"><span class="agent-dot {state_class}"></span>'
-                f'{html.escape(active_provider)} · {state_label}</span>'
-                f'<span class="agent-chip"><span class="agent-dot {"ready" if os.getenv("TAVILY_API_KEY") else ""}"></span>'
-                f'Tavily · {"Ready" if os.getenv("TAVILY_API_KEY") else "Missing key"}</span>'
+                '<div class="agent-status-grid">'
+                f'<span class="agent-status"><span class="agent-status-mark {"ready" if status[provider_key] else ""}"></span>'
+                f'{html.escape(active_provider)} · {"Configured" if status[provider_key] else "Missing"}</span>'
+                f'<span class="agent-status"><span class="agent-status-mark {"ready" if status["TAVILY_API_KEY"] else ""}"></span>'
+                f'Tavily · {"Configured" if status["TAVILY_API_KEY"] else "Missing"}</span>'
+                f'<span class="agent-status"><span class="agent-status-mark {"ready" if status["FIRECRAWL_API_KEY"] else ""}"></span>'
+                f'Firecrawl · {"Configured" if status["FIRECRAWL_API_KEY"] else "Optional"}</span>'
                 "</div>"
             ),
             unsafe_allow_html=True,
         )
         st.caption(
-            "Credentials come from environment variables: local `.env` "
-            "or root-level Streamlit Cloud Secrets."
+            "Values stay in local `.env` or root-level Streamlit Secrets. "
+            "They are never stored in transcripts."
         )
         if locked:
             st.divider()
@@ -566,13 +670,15 @@ def render_sidebar() -> tuple[str, str | None, str]:
 
 
 def render_quick_prompts() -> str | None:
-    st.caption("Try a starter")
-    columns = st.columns(len(QUICK_PROMPTS))
+    st.caption("Starter research tasks")
     selected: str | None = None
-    for column, (label, prompt) in zip(columns, QUICK_PROMPTS):
-        with column:
-            if st.button(label, use_container_width=True, help=prompt):
-                selected = prompt
+    for label, prompt in QUICK_PROMPTS:
+        if st.button(
+            f"{label}  ·  {prompt}",
+            key=f"starter_{safe_slug(label)}",
+            use_container_width=True,
+        ):
+            selected = prompt
     return selected
 
 
@@ -582,6 +688,7 @@ def main() -> None:
         page_icon="🔎",
         layout="centered",
     )
+    resolve_secrets(st.secrets)
     apply_theme()
 
     provider, model_override, version_label = render_sidebar()
@@ -613,56 +720,95 @@ def main() -> None:
     turn_count = len(conversation["transcript"]["turns"]) if conversation else 0
     provider_ready = provider_is_configured(active_provider)
 
-    st.markdown('<p class="agent-kicker">Team B1 · Live research workspace</p>', unsafe_allow_html=True)
-    st.title("Research Agent")
     st.markdown(
-        '<p class="agent-subtitle">Research with visible tool traces, versioned artifacts, and replayable evidence.</p>',
+        '<p class="agent-kicker">Team B1 · Research workspace</p>',
         unsafe_allow_html=True,
     )
+    st.title("Research Agent")
     st.markdown(
         (
-            '<div class="agent-chips">'
-            f'<span class="agent-chip"><span class="agent-dot {"ready" if provider_ready else ""}"></span>'
-            f'{html.escape(active_provider)} · {"Ready" if provider_ready else "Key required"}</span>'
-            f'<span class="agent-chip">Model · {html.escape(str(active_model))}</span>'
-            f'<span class="agent-chip">Tools · {preview["declared_tool_count"]}</span>'
-            f'<span class="agent-chip">Turns · {turn_count}</span>'
+            '<p class="agent-subtitle">Investigate current questions with '
+            "visible sources, inspectable tool traces, and replayable evidence.</p>"
+        ),
+        unsafe_allow_html=True,
+    )
+    status = secret_status(active_provider)
+    st.markdown(
+        (
+            '<div class="agent-status-grid">'
+            f'<span class="agent-status"><span class="agent-status-mark {"ready" if provider_ready else ""}"></span>'
+            f'{html.escape(active_provider)} · {"Configured" if provider_ready else "Setup required"}</span>'
+            f'<span class="agent-status">Model · {html.escape(str(active_model))}</span>'
+            f'<span class="agent-status">Tools · {preview["declared_tool_count"]}</span>'
+            f'<span class="agent-status">Turns · {turn_count}</span>'
             "</div>"
         ),
         unsafe_allow_html=True,
     )
 
+    setup = setup_panel_payload(active_provider)
+    missing_research = [
+        name
+        for name in ("TAVILY_API_KEY", "FIRECRAWL_API_KEY")
+        if not status[name]
+    ]
+    if provider_ready and missing_research:
+        missing_labels = ", ".join(missing_research)
+        st.info(
+            f"Model is ready. Research coverage is limited until {missing_labels} "
+            "is configured."
+        )
+
     saved_notice = st.session_state.pop("saved_notice", None)
     if saved_notice:
         st.toast(f"Transcript updated · {saved_notice}", icon="✅")
-
-    with st.expander(f"Artifact · {artifact.artifact_version}"):
-        st.json(
-            {
-                "version": artifact.version,
-                "artifact_version": artifact.artifact_version,
-                "prompt_hash": artifact.prompt_hash,
-                "tools_hash": artifact.tools_hash,
-                "declared_tools": preview["declared_tool_count"],
-            }
-        )
 
     quick_request: str | None = None
     if conversation:
         for turn in conversation["transcript"]["turns"]:
             render_turn(turn)
-    else:
+    elif setup is None:
         st.markdown(
             (
                 '<div class="agent-empty">'
-                "<strong>Start with a question, not a configuration maze.</strong>"
-                "<span>Choose a provider once. This workspace will lock the artifact, "
-                "show every tool round, and save the transcript automatically.</span>"
+                "<strong>Start with a research question.</strong>"
+                "<span>The workspace locks the selected artifact, records each "
+                "tool round, and saves a replayable transcript automatically.</span>"
                 "</div>"
             ),
             unsafe_allow_html=True,
         )
         quick_request = render_quick_prompts()
+
+    if setup is None or conversation:
+        with st.expander(f"Technical details · {artifact.artifact_version}"):
+            st.json(
+                {
+                    "version": artifact.version,
+                    "artifact_version": artifact.artifact_version,
+                    "prompt_hash": artifact.prompt_hash,
+                    "tools_hash": artifact.tools_hash,
+                    "declared_tools": preview["declared_tool_count"],
+                }
+            )
+
+    if setup:
+        st.markdown(
+            (
+                '<div class="agent-setup">'
+                "<strong>Connect the model provider</strong>"
+                f'<span>Add <code>{html.escape(setup["provider_key"])}</code> '
+                "at the root of Manage app &gt; Settings &gt; Secrets. "
+                "Save, then reboot the app.</span>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
+        st.code(setup["template"], language="toml")
+        st.caption(
+            "The chat remains available in fallback mode until the provider "
+            "status changes to Configured."
+        )
 
     request = st.chat_input("Ask a research question")
     request = request or quick_request
@@ -677,7 +823,7 @@ def main() -> None:
                 st.session_state["conversation"] = conversation
             except Exception as exc:
                 st.warning(
-                    "Không khởi tạo được provider — chuyển sang CHẾ ĐỘ DỰ PHÒNG. "
+                    "Không khởi tạo được provider - chuyển sang CHẾ ĐỘ DỰ PHÒNG. "
                     "Bạn vẫn chat được nhưng chỉ nhận câu trả lời mặc định."
                 )
                 try:

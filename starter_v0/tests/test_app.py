@@ -28,6 +28,46 @@ class FakeProvider:
 
 
 class AppLoopTests(unittest.TestCase):
+    def test_theme_uses_readable_research_cockpit_tokens(self) -> None:
+        css = app.THEME_CSS
+
+        self.assertIn("--agent-bg:", css)
+        self.assertIn("--agent-ink:", css)
+        self.assertIn("color: var(--agent-ink)", css)
+        self.assertNotIn("radial-gradient", css)
+
+    def test_setup_template_contains_names_only(self) -> None:
+        template = app.setup_template("openrouter")
+
+        self.assertIn('OPENROUTER_API_KEY = "PASTE_VALUE_HERE"', template)
+        self.assertIn('TAVILY_API_KEY = "PASTE_VALUE_HERE"', template)
+        self.assertIn('FIRECRAWL_API_KEY = "PASTE_VALUE_HERE"', template)
+        self.assertNotIn("sk-", template)
+        self.assertNotIn("RAPIDAPI", template)
+
+    def test_secret_status_excludes_values(self) -> None:
+        status = app.secret_status(
+            "openrouter",
+            environ={"OPENROUTER_API_KEY": "secret-value"},
+        )
+
+        self.assertTrue(status["OPENROUTER_API_KEY"])
+        self.assertFalse(status["TAVILY_API_KEY"])
+        self.assertFalse(status["FIRECRAWL_API_KEY"])
+        self.assertNotIn("secret-value", repr(status))
+
+    def test_setup_panel_payload_exists_only_when_provider_key_is_missing(self) -> None:
+        missing = app.setup_panel_payload("openrouter", environ={})
+        configured = app.setup_panel_payload(
+            "openrouter",
+            environ={"OPENROUTER_API_KEY": "secret-value"},
+        )
+
+        self.assertEqual(missing["provider_key"], "OPENROUTER_API_KEY")
+        self.assertIn("PASTE_VALUE_HERE", missing["template"])
+        self.assertNotIn("secret-value", repr(missing))
+        self.assertIsNone(configured)
+
     def test_release_ui_defaults_to_v3(self) -> None:
         self.assertEqual(getattr(app, "DEFAULT_VERSION", None), "v3")
 
