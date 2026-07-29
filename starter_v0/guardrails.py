@@ -55,6 +55,23 @@ INJECTION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.IGNORECASE)),
 ]
 
+SENSITIVE_CONTENT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    ("adult_content", re.compile(
+        r"phim\s*(18\s*\+|người lớn|nóng|sex)"
+        r"|khiêu dâm|đồi trụy"
+        r"|web\s*sex|clip\s*(nóng|sex)"
+        r"|\bporn\w*|\bxxx\b|\bjav\b|\bnsfw\b|\bhentai\b",
+        re.IGNORECASE)),
+    ("drug_procurement", re.compile(
+        r"(mua|bán|tìm mua|kiếm|order|đặt)\s+.{0,25}(ma túy|cần sa|heroin|thuốc lắc|\bmeth\b|cỏ mỹ)"
+        r"|(ma túy|cần sa|heroin|thuốc lắc)\s*.{0,12}(mua|bán)\s*ở đâu",
+        re.IGNORECASE)),
+    ("weapon_instructions", re.compile(
+        r"(cách|hướng dẫn|chỉ\s+\S+\s*cách)\s+.{0,15}(chế|chế tạo|làm|tự làm)\s+.{0,15}(bom|thuốc nổ|súng|vũ khí)"
+        r"|(mua|bán)\s+.{0,15}(súng|vũ khí)\b",
+        re.IGNORECASE)),
+]
+
 PII_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\b\d{8,10}:[A-Za-z0-9_-]{30,}\b"), "[token đã ẩn]"),
     (re.compile(r"\bsk-[A-Za-z0-9_-]{16,}\b"), "[api key đã ẩn]"),
@@ -75,6 +92,16 @@ PRIVATE_HOST_PATTERN = re.compile(
 def detect_injection(text: str) -> list[str]:
     """Return the labels of injection patterns found in the user input."""
     return [label for label, pattern in INJECTION_PATTERNS if pattern.search(text)]
+
+
+def detect_sensitive_content(text: str) -> list[str]:
+    """Return labels of sensitive-content categories found in the user input.
+
+    Deliberately narrow: consuming/procuring NSFW, drugs, or weapons is blocked,
+    while news research ABOUT those topics (crime coverage, policy news) passes.
+    Keyword-based, lab-grade — a real product would add a moderation classifier.
+    """
+    return [label for label, pattern in SENSITIVE_CONTENT_PATTERNS if pattern.search(text)]
 
 
 def validate_input(text: str, max_chars: int = MAX_INPUT_CHARS) -> tuple[bool, str | None]:
@@ -137,6 +164,19 @@ def pre_guard(text: str, rate_limiter: RateLimiter | None = None) -> dict[str, A
                 "Yêu cầu có dấu hiệu prompt injection ("
                 + ", ".join(matches)
                 + ") nên không được xử lý. Bạn hãy diễn đạt lại thành một câu hỏi research thông thường nhé."
+            ),
+        }
+
+    sensitive = detect_sensitive_content(text)
+    if sensitive:
+        return {
+            "allowed": False,
+            "reason": "sensitive_content",
+            "message": (
+                "Yêu cầu chứa nội dung nhạy cảm ("
+                + ", ".join(sensitive)
+                + ") nằm ngoài phạm vi của research agent nên không được xử lý. "
+                "Mình chỉ hỗ trợ tìm tin tức, bài mạng xã hội và tóm tắt nguồn công khai."
             ),
         }
 
