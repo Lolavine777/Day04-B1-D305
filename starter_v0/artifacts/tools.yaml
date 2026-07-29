@@ -79,13 +79,13 @@ tools:
 
   # ---------------- Bonus tools ----------------
   - name: send
-    description: "Send text to Telegram only after explicit confirmation from the user. Before confirmation, use clarify with response_type=yes_no and do not call send."
+    description: "Send plain text to the configured Telegram destination only after the user explicitly confirmed the exact text and destination in the current conversation. For an unconfirmed send/post/publish request, call clarify with response_type=yes_no instead of this tool."
     parameters:
       type: object
       properties:
-        text: {type: string, default: "", description: "Nội dung"}
-        confirmed: {type: boolean, default: false, description: "Set true only after explicit confirmation from the user."}
-      required: [text]
+        text: {type: string, default: "", description: "Exact non-empty plain-text message confirmed by the user."}
+        confirmed: {type: boolean, default: false, description: "Must be true only after explicit user confirmation in the current conversation."}
+      required: [text, confirmed]
 
   - name: policy
     description: "Tìm trong tài liệu nội bộ."
