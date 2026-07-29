@@ -3,6 +3,8 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
+import yaml
+
 from guardrails import check_tool_call
 from tools import TOOL_FUNCTIONS, load_tool_declarations
 
@@ -41,6 +43,30 @@ class NewToolsRegistryTests(unittest.TestCase):
         for name in NEW_TOOLS:
             verdict = check_tool_call(name, {})
             self.assertTrue(verdict["allowed"], verdict)
+
+    def test_tool_readme_catalog_matches_tool_metadata(self) -> None:
+        readme = (ROOT / "tools" / "README.md").read_text(encoding="utf-8")
+        rows = {
+            line.split("|")[1].strip().strip("`"): line
+            for line in readme.splitlines()
+            if line.startswith("| `")
+        }
+
+        self.assertEqual(set(rows), set(TOOL_FUNCTIONS))
+        for name, row in rows.items():
+            tool_doc = (ROOT / "tools" / name / "TOOL.md").read_text(
+                encoding="utf-8"
+            )
+            frontmatter = tool_doc.split("---", 2)[1]
+            metadata = yaml.safe_load(frontmatter)
+
+            self.assertIn(str(metadata["track"]), row)
+            for env_name in metadata.get("requires_env", []):
+                self.assertIn(str(env_name), row)
+            if metadata.get("side_effect") == "local_file_write":
+                self.assertIn("local file write", row.lower())
+            elif metadata.get("side_effect") is True:
+                self.assertIn("external write", row.lower())
 
 
 if __name__ == "__main__":
