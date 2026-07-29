@@ -56,6 +56,18 @@ class AppLoopTests(unittest.TestCase):
         self.assertFalse(status["FIRECRAWL_API_KEY"])
         self.assertNotIn("secret-value", repr(status))
 
+    def test_setup_panel_payload_exists_only_when_provider_key_is_missing(self) -> None:
+        missing = app.setup_panel_payload("openrouter", environ={})
+        configured = app.setup_panel_payload(
+            "openrouter",
+            environ={"OPENROUTER_API_KEY": "secret-value"},
+        )
+
+        self.assertEqual(missing["provider_key"], "OPENROUTER_API_KEY")
+        self.assertIn("PASTE_VALUE_HERE", missing["template"])
+        self.assertNotIn("secret-value", repr(missing))
+        self.assertIsNone(configured)
+
     def test_release_ui_defaults_to_v3(self) -> None:
         self.assertEqual(getattr(app, "DEFAULT_VERSION", None), "v3")
 

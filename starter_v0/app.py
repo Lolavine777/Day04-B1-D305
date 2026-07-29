@@ -69,6 +69,20 @@ def secret_status(
     }
 
 
+def setup_panel_payload(
+    provider_name: str,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, str] | None:
+    provider_key = PROVIDER_ENV_VARS[provider_name]
+    if secret_status(provider_name, environ=environ)[provider_key]:
+        return None
+    return {
+        "provider_key": provider_key,
+        "template": setup_template(provider_name),
+    }
+
+
 THEME_CSS = """
 :root {
     --agent-bg: #f3f0e8;
@@ -560,7 +574,7 @@ def render_turn(turn: dict[str, Any]) -> None:
             st.error(turn.get("error", "Provider request failed."))
         elif status == "fallback":
             st.warning(
-                "Backend không khả dụng — phản hồi bên dưới là câu trả lời "
+                "Backend không khả dụng - phản hồi bên dưới là câu trả lời "
                 "mặc định của chế độ dự phòng."
             )
             if turn.get("error"):
@@ -587,8 +601,8 @@ def render_sidebar() -> tuple[str, str | None, str]:
     locked = conversation is not None
 
     with st.sidebar:
-        st.markdown('<p class="agent-kicker">Workspace</p>', unsafe_allow_html=True)
-        st.header("Run settings")
+        st.markdown('<p class="agent-kicker">Configuration</p>', unsafe_allow_html=True)
+        st.header("Research run")
         if locked and st.button("＋ New conversation", use_container_width=True):
             clear_conversation()
             st.rerun()
@@ -614,23 +628,26 @@ def render_sidebar() -> tuple[str, str | None, str]:
         )
 
         active_provider = conversation["provider"] if locked else provider
-        configured = provider_is_configured(active_provider)
-        state_class = "ready" if configured else ""
-        state_label = "Ready" if configured else "Missing API key"
+        status = secret_status(active_provider)
+        provider_key = PROVIDER_ENV_VARS[active_provider]
+        st.divider()
+        st.markdown('<p class="agent-kicker">System status</p>', unsafe_allow_html=True)
         st.markdown(
             (
-                '<div class="agent-chips">'
-                f'<span class="agent-chip"><span class="agent-dot {state_class}"></span>'
-                f'{html.escape(active_provider)} · {state_label}</span>'
-                f'<span class="agent-chip"><span class="agent-dot {"ready" if os.getenv("TAVILY_API_KEY") else ""}"></span>'
-                f'Tavily · {"Ready" if os.getenv("TAVILY_API_KEY") else "Missing key"}</span>'
+                '<div class="agent-status-grid">'
+                f'<span class="agent-status"><span class="agent-status-mark {"ready" if status[provider_key] else ""}"></span>'
+                f'{html.escape(active_provider)} · {"Configured" if status[provider_key] else "Missing"}</span>'
+                f'<span class="agent-status"><span class="agent-status-mark {"ready" if status["TAVILY_API_KEY"] else ""}"></span>'
+                f'Tavily · {"Configured" if status["TAVILY_API_KEY"] else "Missing"}</span>'
+                f'<span class="agent-status"><span class="agent-status-mark {"ready" if status["FIRECRAWL_API_KEY"] else ""}"></span>'
+                f'Firecrawl · {"Configured" if status["FIRECRAWL_API_KEY"] else "Optional"}</span>'
                 "</div>"
             ),
             unsafe_allow_html=True,
         )
         st.caption(
-            "Credentials come from environment variables: local `.env` "
-            "or root-level Streamlit Cloud Secrets."
+            "Values stay in local `.env` or root-level Streamlit Secrets. "
+            "They are never stored in transcripts."
         )
         if locked:
             st.divider()
@@ -653,13 +670,15 @@ def render_sidebar() -> tuple[str, str | None, str]:
 
 
 def render_quick_prompts() -> str | None:
-    st.caption("Try a starter")
-    columns = st.columns(len(QUICK_PROMPTS))
+    st.caption("Starter research tasks")
     selected: str | None = None
-    for column, (label, prompt) in zip(columns, QUICK_PROMPTS):
-        with column:
-            if st.button(label, use_container_width=True, help=prompt):
-                selected = prompt
+    for label, prompt in QUICK_PROMPTS:
+        if st.button(
+            f"{label}  ·  {prompt}",
+            key=f"starter_{safe_slug(label)}",
+            use_container_width=True,
+        ):
+            selected = prompt
     return selected
 
 
@@ -701,39 +720,67 @@ def main() -> None:
     turn_count = len(conversation["transcript"]["turns"]) if conversation else 0
     provider_ready = provider_is_configured(active_provider)
 
-    st.markdown('<p class="agent-kicker">Team B1 · Live research workspace</p>', unsafe_allow_html=True)
-    st.title("Research Agent")
     st.markdown(
-        '<p class="agent-subtitle">Research with visible tool traces, versioned artifacts, and replayable evidence.</p>',
+        '<p class="agent-kicker">Team B1 · Research workspace</p>',
         unsafe_allow_html=True,
     )
+    st.title("Research Agent")
     st.markdown(
         (
-            '<div class="agent-chips">'
-            f'<span class="agent-chip"><span class="agent-dot {"ready" if provider_ready else ""}"></span>'
-            f'{html.escape(active_provider)} · {"Ready" if provider_ready else "Key required"}</span>'
-            f'<span class="agent-chip">Model · {html.escape(str(active_model))}</span>'
-            f'<span class="agent-chip">Tools · {preview["declared_tool_count"]}</span>'
-            f'<span class="agent-chip">Turns · {turn_count}</span>'
+            '<p class="agent-subtitle">Investigate current questions with '
+            "visible sources, inspectable tool traces, and replayable evidence.</p>"
+        ),
+        unsafe_allow_html=True,
+    )
+    status = secret_status(active_provider)
+    provider_key = PROVIDER_ENV_VARS[active_provider]
+    st.markdown(
+        (
+            '<div class="agent-status-grid">'
+            f'<span class="agent-status"><span class="agent-status-mark {"ready" if provider_ready else ""}"></span>'
+            f'{html.escape(active_provider)} · {"Configured" if provider_ready else "Setup required"}</span>'
+            f'<span class="agent-status">Model · {html.escape(str(active_model))}</span>'
+            f'<span class="agent-status">Tools · {preview["declared_tool_count"]}</span>'
+            f'<span class="agent-status">Turns · {turn_count}</span>'
             "</div>"
         ),
         unsafe_allow_html=True,
     )
 
+    setup = setup_panel_payload(active_provider)
+    if setup:
+        st.markdown(
+            (
+                '<div class="agent-setup">'
+                "<strong>Connect the model provider</strong>"
+                f'<span>Add <code>{html.escape(setup["provider_key"])}</code> '
+                "at the root of Manage app &gt; Settings &gt; Secrets. "
+                "Save, then reboot the app.</span>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
+        st.code(setup["template"], language="toml")
+        st.caption(
+            "The chat remains available in fallback mode until the provider "
+            "status changes to Configured."
+        )
+
+    missing_research = [
+        name
+        for name in ("TAVILY_API_KEY", "FIRECRAWL_API_KEY")
+        if not status[name]
+    ]
+    if provider_ready and missing_research:
+        missing_labels = ", ".join(missing_research)
+        st.info(
+            f"Model is ready. Research coverage is limited until {missing_labels} "
+            "is configured."
+        )
+
     saved_notice = st.session_state.pop("saved_notice", None)
     if saved_notice:
         st.toast(f"Transcript updated · {saved_notice}", icon="✅")
-
-    with st.expander(f"Artifact · {artifact.artifact_version}"):
-        st.json(
-            {
-                "version": artifact.version,
-                "artifact_version": artifact.artifact_version,
-                "prompt_hash": artifact.prompt_hash,
-                "tools_hash": artifact.tools_hash,
-                "declared_tools": preview["declared_tool_count"],
-            }
-        )
 
     quick_request: str | None = None
     if conversation:
@@ -743,14 +790,25 @@ def main() -> None:
         st.markdown(
             (
                 '<div class="agent-empty">'
-                "<strong>Start with a question, not a configuration maze.</strong>"
-                "<span>Choose a provider once. This workspace will lock the artifact, "
-                "show every tool round, and save the transcript automatically.</span>"
+                "<strong>Start with a research question.</strong>"
+                "<span>The workspace locks the selected artifact, records each "
+                "tool round, and saves a replayable transcript automatically.</span>"
                 "</div>"
             ),
             unsafe_allow_html=True,
         )
         quick_request = render_quick_prompts()
+
+    with st.expander(f"Technical details · {artifact.artifact_version}"):
+        st.json(
+            {
+                "version": artifact.version,
+                "artifact_version": artifact.artifact_version,
+                "prompt_hash": artifact.prompt_hash,
+                "tools_hash": artifact.tools_hash,
+                "declared_tools": preview["declared_tool_count"],
+            }
+        )
 
     request = st.chat_input("Ask a research question")
     request = request or quick_request
@@ -765,7 +823,7 @@ def main() -> None:
                 st.session_state["conversation"] = conversation
             except Exception as exc:
                 st.warning(
-                    "Không khởi tạo được provider — chuyển sang CHẾ ĐỘ DỰ PHÒNG. "
+                    "Không khởi tạo được provider - chuyển sang CHẾ ĐỘ DỰ PHÒNG. "
                     "Bạn vẫn chat được nhưng chỉ nhận câu trả lời mặc định."
                 )
                 try:
