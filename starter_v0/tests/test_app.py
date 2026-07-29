@@ -35,6 +35,8 @@ class AppLoopTests(unittest.TestCase):
         self.assertIn("--agent-ink:", css)
         self.assertIn("color: var(--agent-ink)", css)
         self.assertNotIn("radial-gradient", css)
+        self.assertNotIn("data-baseweb", css)
+        self.assertNotIn("react-aria", css.lower())
 
     def test_setup_template_contains_names_only(self) -> None:
         template = app.setup_template("openrouter")

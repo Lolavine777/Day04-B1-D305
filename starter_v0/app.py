@@ -85,28 +85,15 @@ def setup_panel_payload(
 
 THEME_CSS = """
 :root {
-    --agent-bg: #f3f0e8;
-    --agent-surface: #fffdf8;
-    --agent-surface-muted: #ebe8df;
+    --agent-bg: #f7f9f8;
+    --agent-surface: #ffffff;
+    --agent-surface-muted: #eef2f1;
     --agent-ink: #17211f;
-    --agent-muted: #66716c;
-    --agent-border: #d6d2c7;
+    --agent-muted: #5f6d68;
+    --agent-border: #cbd5d1;
     --agent-primary: #0f766e;
     --agent-primary-soft: #dcefeb;
     --agent-warning: #a15c16;
-}
-
-.stApp {
-    background: var(--agent-bg);
-    color: var(--agent-ink);
-}
-
-.stApp,
-.stApp p,
-.stApp label,
-.stApp li,
-.stApp span {
-    color: var(--agent-ink);
 }
 
 header[data-testid="stHeader"] {
@@ -128,19 +115,11 @@ footer {
 }
 
 [data-testid="stSidebar"] {
-    background: #e9e5db;
     border-right: 1px solid var(--agent-border);
 }
 
 [data-testid="stSidebar"] > div:first-child {
     padding-top: 1.25rem;
-}
-
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] span {
-    color: var(--agent-ink);
 }
 
 h1 {
@@ -237,51 +216,6 @@ h3 {
     padding: 0.85rem 0 1.1rem;
 }
 
-[data-baseweb="select"] > div,
-[data-baseweb="input"] > div,
-[data-testid="stTextInput"] input,
-[data-testid="stChatInput"] textarea {
-    background: var(--agent-surface) !important;
-    color: var(--agent-ink) !important;
-}
-
-[data-baseweb="select"] svg,
-[data-testid="stTextInput"] svg,
-[data-testid="stChatInput"] svg {
-    fill: var(--agent-ink) !important;
-}
-
-.stButton > button,
-.stDownloadButton > button {
-    background: var(--agent-surface) !important;
-    border: 1px solid var(--agent-border) !important;
-    border-radius: 8px;
-    color: var(--agent-ink) !important;
-    min-height: 2.55rem;
-    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
-}
-
-.stButton > button p,
-.stDownloadButton > button p {
-    color: inherit !important;
-}
-
-.stButton > button:hover,
-.stDownloadButton > button:hover {
-    background: var(--agent-primary-soft) !important;
-    border-color: var(--agent-primary) !important;
-    color: #0b5d56 !important;
-}
-
-.stButton > button:focus-visible,
-.stDownloadButton > button:focus-visible,
-[data-baseweb="select"] > div:focus-within,
-[data-baseweb="input"] > div:focus-within,
-[data-testid="stChatInput"]:focus-within {
-    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18) !important;
-    outline: none !important;
-}
-
 [data-testid="stChatMessage"] {
     background: var(--agent-surface);
     border: 1px solid var(--agent-border);
@@ -291,24 +225,13 @@ h3 {
 }
 
 [data-testid="stExpander"] {
-    background: rgba(255, 253, 248, 0.72);
+    background: rgba(255, 255, 255, 0.72);
     border: 1px solid var(--agent-border);
     border-radius: 8px;
 }
 
 [data-testid="stChatInput"] {
-    background: var(--agent-surface);
-    border: 1px solid var(--agent-border);
-    border-radius: 10px;
     box-shadow: 0 10px 28px rgba(49, 58, 54, 0.10);
-}
-
-[data-testid="stChatInput"] button {
-    color: var(--agent-primary) !important;
-}
-
-code {
-    color: #0b5d56 !important;
 }
 
 @media (max-width: 640px) {
