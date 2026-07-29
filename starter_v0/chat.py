@@ -113,6 +113,22 @@ def run_model_tool_loop(
         non_clarification_events: list[dict[str, Any]] = []
 
         for call in calls:
+            if tool_guard is not None:
+                verdict = tool_guard(call.name, call.args)
+                if not verdict.get("allowed", True):
+                    event = {
+                        "tool": call.name,
+                        "args": call.args,
+                        "result": {
+                            "error": "blocked_by_guardrail",
+                            "message": verdict.get("reason") or "Tool call blocked by guardrail.",
+                        },
+                    }
+                    round_record["tool_results"].append(event)
+                    all_tool_events.append(event)
+                    non_clarification_events.append(event)
+                    continue
+                call = ToolCall(name=call.name, args=verdict.get("args", call.args))
             print(f"TOOL {call.name}({json.dumps(call.args, ensure_ascii=False, sort_keys=True)})")
             event = execute_tool_call(call)
             round_record["tool_results"].append(event)
