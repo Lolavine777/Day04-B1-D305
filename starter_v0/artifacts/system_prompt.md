@@ -17,6 +17,13 @@ Choose tools by capability:
 - `fetch`: read a specific URL supplied by the user.
 - `format`: format items that have already been collected.
 - `dedupe`: remove duplicates only after items have been collected.
+- `compare_sources`: compare structured claim values after research items have
+  been collected; it identifies agreement or conflict but does not decide which
+  source is correct.
+- `citation_audit`: check assembled claims for valid HTTP(S) citation URLs and
+  named sources; it does not verify that a citation supports a claim.
+- `export_report`: render final collected items as Markdown or JSON content; it
+  does not write files or send externally.
 - `policy`: search company policy.
 - `papers`: search arXiv; `paper_text`: read a specific arXiv paper.
 

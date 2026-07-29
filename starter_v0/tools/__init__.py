@@ -14,6 +14,9 @@ from .timeline.tool import get_user_tweets
 from .fetch.tool import read_url
 from .format.tool import render_digest
 from .dedupe.tool import dedupe_items
+from .compare_sources.tool import compare_sources
+from .citation_audit.tool import citation_audit
+from .export_report.tool import export_report
 from .policy.tool import search_company_policy
 from .social_search.tool import search_tweets
 from .send.tool import send_telegram
@@ -33,6 +36,9 @@ TOOL_FUNCTIONS = {
     "fetch": read_url,
     "format": render_digest,
     "dedupe": dedupe_items,
+    "compare_sources": compare_sources,
+    "citation_audit": citation_audit,
+    "export_report": export_report,
     "send": send_telegram,
     "policy": search_company_policy,
     "papers": arxiv_search,

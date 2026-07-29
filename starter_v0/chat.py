@@ -130,7 +130,27 @@ def run_model_tool_loop(
                     continue
                 call = ToolCall(name=call.name, args=verdict.get("args", call.args))
             print(f"TOOL {call.name}({json.dumps(call.args, ensure_ascii=False, sort_keys=True)})")
-            event = execute_tool_call(call)
+            guarded_call = call
+            if tool_guard is not None:
+                verdict = tool_guard(call.name, call.args)
+                if not verdict.get("allowed"):
+                    event = {
+                        "tool": call.name,
+                        "args": call.args,
+                        "result": {
+                            "error": "blocked_by_guardrail",
+                            "message": verdict.get("reason")
+                            or "Tool call was blocked.",
+                        },
+                    }
+                else:
+                    guarded_call = ToolCall(
+                        name=call.name,
+                        args=verdict.get("args", call.args),
+                    )
+                    event = execute_tool_call(guarded_call)
+            else:
+                event = execute_tool_call(guarded_call)
             round_record["tool_results"].append(event)
             all_tool_events.append(event)
 
