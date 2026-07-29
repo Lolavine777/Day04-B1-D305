@@ -26,7 +26,8 @@ Agent hỏi lại khi thiếu account hoặc URL, không tự đoán dữ liệu
 > https://day04-b1-d305-jjrugtl7xzeg8wtabwdfsq.streamlit.app/
 
 Link trên là deployment Streamlit hiện có.
-Các commit wrap-up trong report này đang được kiểm thử local và chưa được push, nên deployment phải được reboot và kiểm tra lại sau khi merge trước khi đánh dấu final public verification.
+Code trong report này nằm trên `develop/long` và chưa được merge hoặc deploy.
+URL hiện redirect sang Streamlit authentication, nên chủ app phải bật public access, reboot sau khi merge, và kiểm tra từ thiết bị khác trước khi đánh dấu final public verification.
 
 ## A2. Tool agent có
 
@@ -63,7 +64,7 @@ Cách này tránh phụ thuộc RapidAPI lỗi nhưng không đảm bảo độ 
 | Scenario | Tool trace cần thấy | Điều chứng minh | Evidence |
 |---|---|---|---|
 | Research | `lookup(query="AI", topic="news", timeframe="day", max_results=3)` | Research dùng đúng nguồn và arguments | `transcripts/v3_openrouter_20260729T192115261570.transcript.json` |
-| Clarification | `clarify(response_type="text")` | Thiếu account thì hỏi lại, không đoán handle | `transcripts/v3_openrouter_20260729T191647739381.transcript.json` |
+| Clarification | `clarify(response_type="text")` -> `timeline(screenname="OpenAI", limit=5)` | Thiếu account thì hỏi lại, sau đó dùng handle user bổ sung | `transcripts/v3_openrouter_20260729T193229325097.transcript.json` |
 | Confirmation | `clarify(response_type="yes_no")`, không có `send` | Telegram yêu cầu xác nhận trước external action | `transcripts/v3_openrouter_20260729T192122677228.transcript.json` |
 
 ---
@@ -139,7 +140,7 @@ Mọi case có `phase="B"`, ID duy nhất, failure type hợp lệ, expectation,
 | Scenario | Version | Tool call và arguments | Transcript | Outcome |
 |---|---|---|---|---|
 | Web research | v3 | `lookup(query="AI", topic="news", timeframe="day", max_results=3)` | `transcripts/v3_openrouter_20260729T192115261570.transcript.json` | `answered`, có kết quả nguồn thật |
-| Missing account | v3 | `clarify(response_type="text")` | `transcripts/v3_openrouter_20260729T191647739381.transcript.json` | `waiting_for_user`, không đoán account |
+| Missing account | v3 | `clarify(response_type="text")` -> `timeline(screenname="OpenAI", limit=5)` | `transcripts/v3_openrouter_20260729T193229325097.transcript.json` | Turn 1 hỏi account; turn 2 dùng `@OpenAI` do user bổ sung và trả kết quả |
 | Telegram boundary | v3 | `clarify(response_type="yes_no")` | `transcripts/v3_openrouter_20260729T192122677228.transcript.json` | `waiting_for_user`, không gọi `send` |
 
 Ba transcript đều dùng artifact `v3+pdc04e9b9897c+t9e4c35d2b484`.
