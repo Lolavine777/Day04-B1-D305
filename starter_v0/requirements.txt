@@ -11,3 +11,4 @@ pypdf>=4.0.0
 streamlit>=1.30.0
 # Public streaming API tests used by the integrated demo:
 fastapi>=0.117.1
+httpx2>=2.0.0

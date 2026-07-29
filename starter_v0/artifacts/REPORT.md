@@ -166,5 +166,6 @@ Nhóm có tổng cộng bốn tool team-authored.
 - Routing PASS không đủ nếu tool result error, vì model có thể chọn đúng tool nhưng API thật vẫn lỗi.
 - Final base và group run đã được review tool results và không có error.
 - Tavily social fallback ổn định hơn RapidAPI trong lab nhưng phụ thuộc web index của `x.com`, nên không được mô tả như API timeline chính thức.
+- Streamlit UI đã được kiểm tra local ở cả trạng thái configured và thiếu key; setup panel chỉ hiển thị tên biến cùng placeholder, còn fallback được gắn nhãn rõ ràng.
 - Streamlit Community Cloud phải dùng root-level Secrets đúng chữ hoa, ví dụ `OPENROUTER_API_KEY`, rồi reboot app sau khi đổi secrets hoặc deploy module mới.
 - Bước tiếp theo sau merge là reboot public app và chạy lại ba scenario từ URL public trước khi nộp.

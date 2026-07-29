@@ -124,7 +124,7 @@ footer {
 .block-container {
     max-width: 960px;
     padding-top: 1.75rem;
-    padding-bottom: 7rem;
+    padding-bottom: 0.75rem;
 }
 
 [data-testid="stSidebar"] {
@@ -733,7 +733,6 @@ def main() -> None:
         unsafe_allow_html=True,
     )
     status = secret_status(active_provider)
-    provider_key = PROVIDER_ENV_VARS[active_provider]
     st.markdown(
         (
             '<div class="agent-status-grid">'
@@ -748,24 +747,6 @@ def main() -> None:
     )
 
     setup = setup_panel_payload(active_provider)
-    if setup:
-        st.markdown(
-            (
-                '<div class="agent-setup">'
-                "<strong>Connect the model provider</strong>"
-                f'<span>Add <code>{html.escape(setup["provider_key"])}</code> '
-                "at the root of Manage app &gt; Settings &gt; Secrets. "
-                "Save, then reboot the app.</span>"
-                "</div>"
-            ),
-            unsafe_allow_html=True,
-        )
-        st.code(setup["template"], language="toml")
-        st.caption(
-            "The chat remains available in fallback mode until the provider "
-            "status changes to Configured."
-        )
-
     missing_research = [
         name
         for name in ("TAVILY_API_KEY", "FIRECRAWL_API_KEY")
@@ -786,7 +767,7 @@ def main() -> None:
     if conversation:
         for turn in conversation["transcript"]["turns"]:
             render_turn(turn)
-    else:
+    elif setup is None:
         st.markdown(
             (
                 '<div class="agent-empty">'
@@ -799,15 +780,34 @@ def main() -> None:
         )
         quick_request = render_quick_prompts()
 
-    with st.expander(f"Technical details · {artifact.artifact_version}"):
-        st.json(
-            {
-                "version": artifact.version,
-                "artifact_version": artifact.artifact_version,
-                "prompt_hash": artifact.prompt_hash,
-                "tools_hash": artifact.tools_hash,
-                "declared_tools": preview["declared_tool_count"],
-            }
+    if setup is None or conversation:
+        with st.expander(f"Technical details · {artifact.artifact_version}"):
+            st.json(
+                {
+                    "version": artifact.version,
+                    "artifact_version": artifact.artifact_version,
+                    "prompt_hash": artifact.prompt_hash,
+                    "tools_hash": artifact.tools_hash,
+                    "declared_tools": preview["declared_tool_count"],
+                }
+            )
+
+    if setup:
+        st.markdown(
+            (
+                '<div class="agent-setup">'
+                "<strong>Connect the model provider</strong>"
+                f'<span>Add <code>{html.escape(setup["provider_key"])}</code> '
+                "at the root of Manage app &gt; Settings &gt; Secrets. "
+                "Save, then reboot the app.</span>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
+        st.code(setup["template"], language="toml")
+        st.caption(
+            "The chat remains available in fallback mode until the provider "
+            "status changes to Configured."
         )
 
     request = st.chat_input("Ask a research question")
