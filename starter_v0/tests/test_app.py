@@ -28,6 +28,9 @@ class FakeProvider:
 
 
 class AppLoopTests(unittest.TestCase):
+    def test_release_ui_defaults_to_v3(self) -> None:
+        self.assertEqual(getattr(app, "DEFAULT_VERSION", None), "v3")
+
     def make_conversation(
         self,
         provider: FakeProvider,

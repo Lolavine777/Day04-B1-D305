@@ -41,6 +41,7 @@ QUICK_PROMPTS = (
 )
 HISTORY_WINDOW = 5
 MAX_TOOL_ROUNDS = 4
+DEFAULT_VERSION = "v3"
 SECRET_ENV_MARKERS = ("KEY", "TOKEN", "SECRET", "PASSWORD")
 
 
@@ -515,7 +516,7 @@ def render_sidebar() -> tuple[str, str | None, str]:
         version_label = (
             st.text_input(
                 "Version",
-                value="v0",
+                value=DEFAULT_VERSION,
                 disabled=locked,
                 help="Combined with the current prompt and tool hashes.",
             ).strip()
