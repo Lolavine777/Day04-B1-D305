@@ -138,6 +138,7 @@ class OpenAIStreamingProviderTests(unittest.TestCase):
             api_key_env="TEST_OPENROUTER_KEY",
             base_url="https://openrouter.ai/api/v1",
             default_model="test/model",
+            max_tokens=4096,
         )
 
         with patch.dict(
@@ -151,6 +152,7 @@ class OpenAIStreamingProviderTests(unittest.TestCase):
             )
 
         self.assertNotIn("stream_options", completions.kwargs)
+        self.assertEqual(completions.kwargs["max_tokens"], 4096)
 
 
 if __name__ == "__main__":

@@ -88,6 +88,18 @@ EXTERNAL_ACTION_PATTERN = re.compile(
     r"|\b(?:telegram|channel|kênh)\b.{0,80}(?:\b(?:send|post|publish)\b|\b(?:gửi|đăng|đăng tải|xuất bản)\b)",
     re.IGNORECASE,
 )
+MISSING_TIMELINE_PATTERN = re.compile(
+    r"(?:bài đăng|tweets?).{0,40}(?:mới nhất|gần đây)"
+    r"|(?:mới nhất|gần đây).{0,40}(?:bài đăng|tweets?)"
+    r"|\b(?:posts?|tweets?).{0,40}\b(?:latest|recent)\b"
+    r"|\b(?:latest|recent)\b.{0,40}\b(?:posts?|tweets?)\b",
+    re.IGNORECASE,
+)
+NAMED_SOCIAL_TARGET_PATTERN = re.compile(
+    r"@\w+|\b(?:account|handle|tài khoản)\s+@?[\w.-]+"
+    r"|\b(?:về|about)\s+[\w#@.-]+",
+    re.IGNORECASE,
+)
 
 
 # ---------------- Pre-guard ----------------
@@ -247,6 +259,42 @@ def enforce_confirmation_boundary(messages: list[dict[str, str]], call: ToolCall
     return ToolCall(name=call.name, args=args)
 
 
+def enforce_missing_timeline_boundary(
+    messages: list[dict[str, str]],
+    calls: list[ToolCall],
+    assistant_text: str | None,
+) -> list[ToolCall]:
+    """Turn a missing social account into a visible clarification tool event."""
+    user_messages = [
+        message.get("content", "")
+        for message in messages
+        if message.get("role") == "user"
+    ]
+    latest_user = user_messages[-1] if user_messages else ""
+    prior_user_context = "\n".join(user_messages[:-1])
+    if (
+        not MISSING_TIMELINE_PATTERN.search(latest_user)
+        or NAMED_SOCIAL_TARGET_PATTERN.search(latest_user)
+        or NAMED_SOCIAL_TARGET_PATTERN.search(prior_user_context)
+    ):
+        return calls
+    if calls and calls[0].name == "clarify":
+        return calls
+    if calls and all(call.name not in {"timeline", "social_search", "clarify"} for call in calls):
+        return calls
+    question = (
+        assistant_text.strip()
+        if assistant_text and assistant_text.strip().endswith("?")
+        else "Bạn muốn xem bài đăng mới nhất của tài khoản X nào?"
+    )
+    return [
+        ToolCall(
+            name="clarify",
+            args={"question": question, "response_type": "text"},
+        )
+    ]
+
+
 # ---------------- Fallback ----------------
 
 class FallbackProvider:
@@ -267,9 +315,10 @@ def fallback_hint(error_text: str) -> str:
     lowered = error_text.lower()
     if "missing api key" in lowered or "api key env var" in lowered:
         return (
-            "Nguyên nhân: thiếu API key của provider. Tạo file starter_v0/.env "
-            "(copy từ .env.example) và điền OPENROUTER_API_KEY (hoặc key của provider bạn chọn), "
-            "sau đó khởi động lại app."
+            "Nguyên nhân: thiếu API key của provider. "
+            "Local: tạo starter_v0/.env từ .env.example. "
+            "Streamlit Cloud: đặt OPENROUTER_API_KEY ở cấp root trong "
+            "App settings > Secrets, rồi reboot app."
         )
     if any(word in lowered for word in ("connection", "timeout", "timed out", "max retries", "getaddrinfo")):
         return "Nguyên nhân: lỗi mạng khi gọi provider. Kiểm tra kết nối internet rồi thử lại."

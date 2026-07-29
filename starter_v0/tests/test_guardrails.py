@@ -14,6 +14,7 @@ from guardrails import (
     detect_injection,
     detect_sensitive_content,
     enforce_confirmation_boundary,
+    enforce_missing_timeline_boundary,
     fallback_hint,
     fallback_response,
     mask_pii,
@@ -129,6 +130,43 @@ class MaskPiiTests(unittest.TestCase):
 
 
 class CheckToolCallTests(unittest.TestCase):
+    def test_missing_timeline_account_becomes_clarify_tool(self) -> None:
+        calls = enforce_missing_timeline_boundary(
+            [{"role": "user", "content": "Tóm tắt 5 bài đăng mới nhất trên X giúp mình."}],
+            [],
+            "Bạn muốn xem tài khoản nào?",
+        )
+        self.assertEqual(calls[0].name, "clarify")
+        self.assertEqual(calls[0].args["response_type"], "text")
+
+    def test_named_social_topic_keeps_social_search(self) -> None:
+        original = ToolCall(
+            name="social_search",
+            args={"query": "OpenAI", "search_type": "Latest", "limit": 5},
+        )
+        calls = enforce_missing_timeline_boundary(
+            [{"role": "user", "content": "Tìm 5 bài đăng mới nhất trên X về OpenAI."}],
+            [original],
+            None,
+        )
+        self.assertEqual(calls, [original])
+
+    def test_prior_account_handle_keeps_timeline_call(self) -> None:
+        original = ToolCall(
+            name="timeline",
+            args={"screenname": "OpenAI", "limit": 5},
+        )
+        calls = enforce_missing_timeline_boundary(
+            [
+                {"role": "user", "content": "Dùng tài khoản @OpenAI nhé."},
+                {"role": "assistant", "content": "Đã ghi nhận."},
+                {"role": "user", "content": "Tóm tắt 5 bài đăng mới nhất giúp mình."},
+            ],
+            [original],
+            None,
+        )
+        self.assertEqual(calls, [original])
+
     def test_external_action_clarify_is_normalized_to_yes_no(self) -> None:
         call = enforce_confirmation_boundary(
             [{"role": "user", "content": "Đăng bản tin này lên Telegram giúp mình"}],
@@ -245,6 +283,14 @@ class FallbackResponseTests(unittest.TestCase):
 class FallbackHintTests(unittest.TestCase):
     def test_missing_api_key_hints_env_setup(self) -> None:
         hint = fallback_hint("RuntimeError: Missing API key env var: OPENROUTER_API_KEY")
+        self.assertIn(".env", hint)
+
+    def test_missing_api_key_hint_covers_streamlit_secrets(self) -> None:
+        hint = fallback_hint(
+            "RuntimeError: Missing API key env var: OPENROUTER_API_KEY"
+        )
+        self.assertIn("Streamlit", hint)
+        self.assertIn("OPENROUTER_API_KEY", hint)
         self.assertIn(".env", hint)
 
     def test_network_error_hints_connectivity(self) -> None:

@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import app
 from app import create_conversation, run_turn, sanitize_error_text
 from providers.base import ModelResponse, ToolCall
 
@@ -27,6 +28,12 @@ class FakeProvider:
 
 
 class AppLoopTests(unittest.TestCase):
+    def test_release_ui_defaults_to_v3(self) -> None:
+        self.assertEqual(getattr(app, "DEFAULT_VERSION", None), "v3")
+
+    def test_blank_version_uses_release_default(self) -> None:
+        self.assertEqual(app.normalize_version_label("   "), "v3")
+
     def make_conversation(
         self,
         provider: FakeProvider,
@@ -109,6 +116,25 @@ class AppLoopTests(unittest.TestCase):
         self.assertEqual(turn["status"], "waiting_for_user")
         self.assertEqual(turn["assistant_text"], "Which account?")
 
+    def test_missing_timeline_account_normalizes_direct_question(self) -> None:
+        provider = FakeProvider(
+            [ModelResponse(text="Which account should I use?")]
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            conversation = self.make_conversation(provider, Path(temp_dir))
+            turn = run_turn(
+                conversation,
+                "Tóm tắt 5 bài đăng mới nhất trên X giúp mình.",
+                provider_factory=lambda _: provider,
+            )
+
+        self.assertEqual(turn["status"], "waiting_for_user")
+        self.assertEqual(turn["tool_events"][0]["tool"], "clarify")
+        self.assertEqual(
+            turn["tool_events"][0]["args"]["response_type"],
+            "text",
+        )
+
     def test_sensitive_action_requests_confirmation_without_send(self) -> None:
         provider = FakeProvider(
             [
@@ -173,6 +199,14 @@ class AppLoopTests(unittest.TestCase):
         self.assertNotIn("https://", safe)
         self.assertNotIn("another-secret", safe)
         self.assertIn("[redacted-url]", safe)
+
+    def test_fallback_hint_survives_stale_guardrails_module(self) -> None:
+        hint_builder = getattr(app, "fallback_hint", None)
+        self.assertIsNotNone(hint_builder)
+        with patch.object(app.guardrails, "fallback_hint", None):
+            hint = hint_builder("RuntimeError: backend unavailable")
+
+        self.assertIn("khởi động lại", hint.lower())
 
 
 if __name__ == "__main__":
