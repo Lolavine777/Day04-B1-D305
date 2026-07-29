@@ -112,6 +112,7 @@ def run_model_tool_loop(
     event_callback: Callable[[dict[str, Any]], None] | None = None,
     blocked_tools: set[str] | None = None,
     should_cancel: Callable[[], bool] | None = None,
+    tool_guard: Any = None,
 ) -> dict[str, Any]:
     started_at = time.perf_counter()
     first_token_at: float | None = None
@@ -248,6 +249,21 @@ def run_model_tool_loop(
                         "tool_events": all_tool_events,
                     }
                 )
+
+            guard_block_reason: str | None = None
+            if tool_guard is not None:
+                verdict = tool_guard(call.name, call.args)
+                if not verdict.get("allowed", True):
+                    guard_block_reason = (
+                        verdict.get("reason")
+                        or "Tool call blocked by guardrail."
+                    )
+                else:
+                    call = ToolCall(
+                        name=call.name,
+                        args=verdict.get("args", call.args),
+                    )
+
             tool_id = f"r{round_index}-t{call_index}"
             print(f"🔧 {call.name}({json.dumps(call.args, ensure_ascii=False, sort_keys=True)})")
             _emit(
@@ -266,6 +282,15 @@ def run_model_tool_loop(
                     "result": {
                         "error": "tool_disabled",
                         "message": "This tool is disabled in the public web workspace.",
+                    },
+                }
+            elif guard_block_reason is not None:
+                event = {
+                    "tool": call.name,
+                    "args": call.args,
+                    "result": {
+                        "error": "blocked_by_guardrail",
+                        "message": guard_block_reason,
                     },
                 }
             else:

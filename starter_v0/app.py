@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 import streamlit as st
 
+import guardrails
 from chat import (
     now_iso,
     run_model_tool_loop,
@@ -344,6 +345,21 @@ def run_turn(
         "rounds": [],
         "tool_events": [],
     }
+    rate_limiter = conversation.setdefault("rate_limiter", guardrails.RateLimiter())
+    verdict = guardrails.pre_guard(user_text, rate_limiter=rate_limiter)
+    if not verdict["allowed"]:
+        turn_record.update(
+            {
+                "status": "blocked_by_guardrail",
+                "guardrail_reason": verdict["reason"],
+                "assistant_text": verdict["message"],
+            }
+        )
+        turn_record["ended_at"] = now_iso()
+        transcript["turns"].append(turn_record)
+        write_transcript(conversation["transcript_path"], transcript)
+        return turn_record
+
     messages = [
         {"role": "system", "content": conversation["system_prompt"]},
         *trim_history(conversation["history"], HISTORY_WINDOW),
@@ -358,8 +374,12 @@ def run_turn(
             tools=conversation["tools"],
             model=conversation["model_override"],
             max_tool_rounds=MAX_TOOL_ROUNDS,
+            tool_guard=guardrails.check_tool_call,
         )
         sanitized_result = sanitize_tool_errors(result)
+        sanitized_result["assistant_text"] = guardrails.mask_pii(
+            sanitized_result.get("assistant_text") or ""
+        )
         turn_record.update(sanitized_result)
         assistant_text = sanitized_result["assistant_text"]
         conversation["history"].append({"role": "user", "content": user_text})
@@ -369,10 +389,11 @@ def run_turn(
     except Exception as exc:
         turn_record.update(
             {
-                "status": "provider_error",
+                "status": "fallback",
                 "error": sanitize_error_text(
                     f"{type(exc).__name__}: {str(exc)}"
                 ),
+                "assistant_text": guardrails.fallback_response(user_text),
             }
         )
 
@@ -432,8 +453,18 @@ def render_turn(turn: dict[str, Any]) -> None:
         st.write(turn["user"])
 
     with st.chat_message("assistant"):
-        if turn.get("status") == "provider_error":
+        status = turn.get("status")
+        if status == "provider_error":
             st.error(turn.get("error", "Provider request failed."))
+        elif status == "fallback":
+            st.warning(
+                "Backend không khả dụng — phản hồi bên dưới là câu trả lời "
+                "mặc định của chế độ dự phòng."
+            )
+            st.write(turn.get("assistant_text") or "No response text.")
+        elif status == "blocked_by_guardrail":
+            st.warning(turn.get("assistant_text") or "Yêu cầu bị guardrail chặn.")
+            st.caption(f"Guardrail: {turn.get('guardrail_reason', 'unknown')}")
         else:
             st.markdown(turn.get("assistant_text") or "No response text.")
             status = turn.get("status", "unknown")
@@ -626,12 +657,25 @@ def main() -> None:
                 )
                 st.session_state["conversation"] = conversation
             except Exception as exc:
-                st.error(
-                    sanitize_error_text(
-                        f"Could not start the conversation: {type(exc).__name__}: {exc}"
-                    )
+                st.warning(
+                    "Không khởi tạo được provider — chuyển sang CHẾ ĐỘ DỰ PHÒNG. "
+                    "Bạn vẫn chat được nhưng chỉ nhận câu trả lời mặc định."
                 )
-                st.stop()
+                try:
+                    conversation = create_conversation(
+                        provider,
+                        model_override,
+                        version_label,
+                        provider_factory=lambda _: guardrails.FallbackProvider(),
+                    )
+                    st.session_state["conversation"] = conversation
+                except Exception:
+                    st.error(
+                        sanitize_error_text(
+                            f"Could not start the conversation: {type(exc).__name__}: {exc}"
+                        )
+                    )
+                    st.stop()
 
         with st.spinner("Researching…"):
             run_turn(conversation, request)

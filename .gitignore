@@ -8,6 +8,15 @@ __pycache__/
 node_modules/
 .vercel/
 out/
+*.tsbuildinfo
+*.log
+
+# Local runtime artifacts
+starter_v0/transcripts/*.transcript.json
+
+# Tool-generated repository instructions (not application source)
+/AGENTS.md
+/CLAUDE.md
 
 # Secrets — never commit real keys
 .env

@@ -20,12 +20,24 @@ def _timeline_items(
     source = f"@{screenname}" if screenname else "x.com"
     results: list[dict[str, Any]] = []
     for item in items:
-        if not _is_x_status(str(item.get("url") or "")):
+        item_url = str(item.get("url") or "")
+        if not _is_x_status(item_url):
+            continue
+        path_parts = [
+            part
+            for part in urlparse(item_url).path.split("/")
+            if part
+        ]
+        if (
+            len(path_parts) < 3
+            or path_parts[0].casefold() != screenname.casefold()
+            or path_parts[1].casefold() != "status"
+        ):
             continue
         normalized = dict(item)
         normalized["source"] = source
         results.append(normalized)
-    return results[: int(limit or 5)]
+    return results[: max(1, min(int(limit or 5), 20))]
 
 
 def get_user_tweets(
@@ -33,6 +45,7 @@ def get_user_tweets(
     limit: int = 5,
 ) -> dict[str, Any]:
     normalized_screenname = screenname.strip().lstrip("@")
+    normalized_limit = max(1, min(int(limit or 5), 20))
     result = web_search(
         query=(
             f"site:x.com/{normalized_screenname}/status "
@@ -40,7 +53,7 @@ def get_user_tweets(
         ),
         topic="general",
         timeframe="month",
-        max_results=int(limit or 5),
+        max_results=normalized_limit,
     )
     if result.get("error"):
         return {
@@ -57,6 +70,6 @@ def get_user_tweets(
         "items": _timeline_items(
             result.get("items", []),
             normalized_screenname,
-            limit,
+            normalized_limit,
         ),
     }

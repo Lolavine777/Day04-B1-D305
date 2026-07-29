@@ -25,6 +25,7 @@ if str(STARTER_ROOT) not in sys.path:
     sys.path.insert(0, str(STARTER_ROOT))
 
 from chat import run_model_tool_loop, trim_history  # noqa: E402
+from guardrails import check_tool_call  # noqa: E402
 from providers import make_provider  # noqa: E402
 from tools import load_tool_declarations, to_openai_tools  # noqa: E402
 from versioning import artifact_version_dict, build_artifact_version  # noqa: E402
@@ -37,6 +38,9 @@ MAX_TOOL_ROUNDS = 4
 PUBLIC_BLOCKED_TOOLS = {"send"}
 PUBLIC_PROVIDER = "openrouter"
 DEFAULT_PUBLIC_MODEL = "openai/gpt-4o-mini"
+DEFAULT_ARTIFACT_VERSION = (
+    os.getenv("PUBLIC_ARTIFACT_VERSION", "v3").strip() or "v3"
+)
 DEFAULT_RATE_LIMIT = 8
 DEFAULT_RATE_WINDOW_SECONDS = 60
 MAX_RATE_LIMIT_BUCKETS = 4_096
@@ -60,7 +64,11 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1, max_length=20)
     provider: Literal["openrouter", "openai", "anthropic", "gemini"] = "openrouter"
     model: str | None = Field(default=None, max_length=200)
-    version: str = Field(default="v0", min_length=1, max_length=32)
+    version: str = Field(
+        default=DEFAULT_ARTIFACT_VERSION,
+        min_length=1,
+        max_length=32,
+    )
 
 
 app = FastAPI(title="Research Agent API", docs_url=None, redoc_url=None)
@@ -269,7 +277,7 @@ def health() -> dict[str, Any]:
 @app.get("/api/config")
 def config(
     provider: Literal["openrouter", "openai", "anthropic", "gemini"] = "openrouter",
-    version: str = "v0",
+    version: str = DEFAULT_ARTIFACT_VERSION,
 ) -> dict[str, Any]:
     selected_model = _resolve_public_model(provider, None)
     runtime = _load_runtime(version, provider, selected_model)
@@ -322,6 +330,7 @@ async def chat(payload: ChatRequest, request: Request) -> StreamingResponse:
                     event_callback=publish,
                     blocked_tools=PUBLIC_BLOCKED_TOOLS,
                     should_cancel=lambda: not accepting_events.is_set(),
+                    tool_guard=check_tool_call,
                 )
             except Exception as exc:
                 publish(

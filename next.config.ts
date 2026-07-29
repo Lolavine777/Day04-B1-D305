@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    useTypeScriptCli: true,
+  },
   async rewrites() {
     if (process.env.NODE_ENV !== "development") {
       return [];

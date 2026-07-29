@@ -8,7 +8,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from api import index as api_index
-from providers.base import ModelResponse
+from providers.base import ModelResponse, ToolCall
 
 
 app = api_index.app
@@ -35,6 +35,33 @@ class FakeStreamingProvider:
                 "cost": 0.00001,
             },
         )
+
+
+class GuardedStreamingProvider:
+    default_model = "test/model"
+
+    def __init__(self) -> None:
+        self.round = 0
+
+    def complete_stream(
+        self,
+        *args,
+        on_text_delta=None,
+        **kwargs,
+    ) -> ModelResponse:
+        self.round += 1
+        if self.round == 1:
+            return ModelResponse(
+                tool_calls=[
+                    ToolCall(
+                        name="fetch",
+                        args={"url": "http://127.0.0.1/private"},
+                    )
+                ]
+            )
+        if on_text_delta is not None:
+            on_text_delta("Blocked safely.")
+        return ModelResponse(text="Blocked safely.")
 
 
 def parse_sse(body: str) -> list[tuple[str, dict]]:
@@ -83,6 +110,10 @@ class ApiStreamingTests(unittest.TestCase):
         self.assertIn("run_started", event_types)
         self.assertEqual(event_types.count("assistant_delta"), 2)
         self.assertEqual(event_types[-1], "run_completed")
+        self.assertEqual(
+            events[0][1]["artifact"]["version"],
+            api_index.DEFAULT_ARTIFACT_VERSION,
+        )
 
         run_ids = {
             payload["run_id"]
@@ -151,6 +182,39 @@ class ApiStreamingTests(unittest.TestCase):
         self.assertEqual(first.status_code, 200)
         self.assertEqual(second.status_code, 429)
         self.assertGreaterEqual(int(second.headers["retry-after"]), 1)
+
+    def test_web_api_applies_tool_guard_before_execution(self) -> None:
+        def fail_if_called(**kwargs):
+            raise AssertionError("guarded fetch was executed")
+
+        with patch(
+            "api.index.make_provider",
+            return_value=GuardedStreamingProvider(),
+        ), patch.dict(
+            "chat.TOOL_FUNCTIONS",
+            {"fetch": fail_if_called},
+        ):
+            with TestClient(app) as client:
+                response = client.post(
+                    "/api/chat",
+                    json={
+                        "messages": [
+                            {"role": "user", "content": "Read the private URL"}
+                        ],
+                    },
+                )
+
+        self.assertEqual(response.status_code, 200)
+        events = parse_sse(response.text)
+        tool_completed = next(
+            payload
+            for event_type, payload in events
+            if event_type == "tool_completed"
+        )
+        self.assertEqual(
+            tool_completed["result"]["error"],
+            "blocked_by_guardrail",
+        )
 
 
 if __name__ == "__main__":

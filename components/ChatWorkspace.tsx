@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Activity,
   ArrowClockwise,
   ArrowUp,
   CaretDown,
@@ -16,6 +15,7 @@ import {
   List,
   Moon,
   Plus,
+  Pulse,
   SidebarSimple,
   Stop,
   Sun,
@@ -162,8 +162,6 @@ interface SessionSidebarProps {
   model: string;
   config: RuntimeConfig | null;
   apiStatus: "checking" | "ready" | "offline";
-  onProviderChange: (provider: ProviderName) => void;
-  onModelChange: (model: string) => void;
   onCreate: () => void;
   onSelect: (sessionId: string) => void;
   onDelete: (sessionId: string) => void;
@@ -178,8 +176,6 @@ const SessionSidebar = memo(function SessionSidebar({
   model,
   config,
   apiStatus,
-  onProviderChange,
-  onModelChange,
   onCreate,
   onSelect,
   onDelete,
@@ -255,31 +251,21 @@ const SessionSidebar = memo(function SessionSidebar({
           </span>
         </div>
 
-        <label className="fieldLabel">
+        <div className="runtimeReadout">
           <span>Nhà cung cấp</span>
-          <select
-            value={provider}
-            onChange={(event) => onProviderChange(event.target.value as ProviderName)}
-          >
-            <option value="openrouter">OpenRouter</option>
-            <option value="openai">OpenAI</option>
-            <option value="anthropic">Anthropic</option>
-            <option value="gemini">Gemini</option>
-          </select>
-        </label>
+          <strong>{provider === "openrouter" ? "OpenRouter" : provider}</strong>
+        </div>
 
-        <label className="fieldLabel">
+        <div className="runtimeReadout">
           <span>Mô hình</span>
-          <input
-            value={model}
-            onChange={(event) => onModelChange(event.target.value)}
-            placeholder={config?.model ?? "Mặc định của provider"}
-          />
-        </label>
+          <strong title={model || config?.model || "Mặc định của provider"}>
+            {compactModelName(model || config?.model)}
+          </strong>
+        </div>
 
         <div className="runtimeMeta">
           <span>{config?.tool_count ?? 0} tools khả dụng</span>
-          <span>{config?.artifact?.version ?? "v0"} prompt</span>
+          <span>{config?.artifact?.version ?? "v3"} prompt</span>
         </div>
 
         <div className="sidebarActions">
@@ -316,6 +302,7 @@ const TracePanel = memo(function TracePanel({
   onCopy,
   onClose,
 }: TracePanelProps) {
+  const reduceMotion = useReducedMotion();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   return (
@@ -358,7 +345,7 @@ const TracePanel = memo(function TracePanel({
           value={formatDuration(metrics.latencyMs)}
         />
         <Metric
-          icon={<Activity />}
+          icon={<Pulse />}
           label="Tokens"
           value={formatTokens(metrics.totalTokens)}
         />
@@ -423,7 +410,7 @@ const TracePanel = memo(function TracePanel({
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.18 }}
+                      transition={{ duration: reduceMotion ? 0 : 0.18 }}
                     >
                       <CodePanel
                         title="Tham số"
@@ -647,8 +634,8 @@ export function ChatWorkspace() {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState("");
-  const [provider, setProvider] = useState<ProviderName>("openrouter");
-  const [model, setModel] = useState("");
+  const provider: ProviderName = "openrouter";
+  const model = "";
   const [config, setConfig] = useState<RuntimeConfig | null>(null);
   const [apiStatus, setApiStatus] = useState<"checking" | "ready" | "offline">(
     "checking",
@@ -678,7 +665,19 @@ export function ChatWorkspace() {
 
   useEffect(() => {
     const stored = loadSessions();
-    const initialSessions = stored.length > 0 ? stored : [createSession()];
+    const restored = stored.map((session) => ({
+      ...session,
+      messages: session.messages.map((message) =>
+        message.status === "streaming"
+          ? {
+              ...message,
+              status: "cancelled" as const,
+              run: { ...message.run, status: "cancelled" },
+            }
+          : message,
+      ),
+    }));
+    const initialSessions = restored.length > 0 ? restored : [createSession()];
     const storedActive = loadActiveSessionId();
     const initialActive = initialSessions.some((session) => session.id === storedActive)
       ? storedActive!
@@ -718,7 +717,7 @@ export function ChatWorkspace() {
   useEffect(() => {
     let alive = true;
     setApiStatus("checking");
-    fetch(`/api/config?provider=${provider}&version=v0`)
+    fetch(`/api/config?provider=${provider}&version=v3`)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error("Config unavailable");
@@ -730,7 +729,7 @@ export function ChatWorkspace() {
           return;
         }
         setConfig(value);
-        setApiStatus("ready");
+        setApiStatus(value.provider_ready ? "ready" : "offline");
       })
       .catch(() => {
         if (alive) {
@@ -933,7 +932,7 @@ export function ChatWorkspace() {
               })),
             provider,
             model: model.trim() || undefined,
-            version: "v0",
+            version: "v3",
           },
           { signal: controller.signal, onEvent: handleEvent },
         );
@@ -1187,8 +1186,6 @@ export function ChatWorkspace() {
             model={model}
             config={config}
             apiStatus={apiStatus}
-            onProviderChange={setProvider}
-            onModelChange={setModel}
             onCreate={createNewSession}
             onSelect={(id) => setActiveSessionId(id)}
             onDelete={deleteSession}
@@ -1372,8 +1369,6 @@ export function ChatWorkspace() {
                 model={model}
                 config={config}
                 apiStatus={apiStatus}
-                onProviderChange={setProvider}
-                onModelChange={setModel}
                 onCreate={createNewSession}
                 onSelect={(id) => {
                   setActiveSessionId(id);

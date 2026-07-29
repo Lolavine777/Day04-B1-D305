@@ -20,7 +20,7 @@ def _social_items(
         item
         for item in items
         if _is_x_status(str(item.get("url") or ""))
-    ][: int(limit or 5)]
+    ][: max(1, min(int(limit or 5), 20))]
 
 
 def search_tweets(
@@ -31,12 +31,23 @@ def search_tweets(
     normalized_search_type = (
         search_type if search_type in {"Latest", "Top"} else "Latest"
     )
+    normalized_limit = max(1, min(int(limit or 5), 20))
     timeframe = "week" if normalized_search_type == "Latest" else "month"
+    tavily_query = (
+        f"site:x.com status {query}"
+        if normalized_search_type == "Latest"
+        else f"site:x.com status {query} popular posts"
+    )
+    tavily_limit = (
+        normalized_limit
+        if normalized_search_type == "Latest"
+        else min(normalized_limit * 3, 20)
+    )
     result = web_search(
-        query=f"site:x.com status {query}",
+        query=tavily_query,
         topic="general",
         timeframe=timeframe,
-        max_results=int(limit or 5),
+        max_results=tavily_limit,
     )
     if result.get("error"):
         return {
@@ -51,5 +62,5 @@ def search_tweets(
         "coverage": "public_web_index",
         "query": query,
         "search_type": normalized_search_type,
-        "items": _social_items(result.get("items", []), limit),
+        "items": _social_items(result.get("items", []), normalized_limit),
     }

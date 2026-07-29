@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -11,9 +12,17 @@ import requests
 from tools._shared import ROOT, TIMEOUT, err
 
 
-ARXIV_DIR = ROOT / "arxiv_papers"
 ARXIV_MIN_INTERVAL_SECONDS = 3.0
 _last_arxiv_request_at = 0.0
+
+
+def _arxiv_cache_dir() -> Path:
+    configured = os.getenv("ARXIV_CACHE_DIR", "").strip()
+    if configured:
+        return Path(configured).expanduser()
+    if os.getenv("VERCEL") == "1":
+        return Path(tempfile.gettempdir()) / "research-agent-arxiv"
+    return ROOT / "arxiv_papers"
 
 
 def _arxiv_user_agent() -> str:
@@ -38,8 +47,9 @@ def _arxiv_id(value: str) -> str:
 def _download_arxiv_pdf(arxiv_url: str) -> tuple[str, Path, str]:
     arxiv_id = _arxiv_id(arxiv_url)
     pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
-    ARXIV_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = ARXIV_DIR / f"{arxiv_id}.pdf"
+    cache_dir = _arxiv_cache_dir()
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    output_path = cache_dir / f"{arxiv_id}.pdf"
     _rate_limit_arxiv()
     response = requests.get(pdf_url, headers={"User-Agent": _arxiv_user_agent()}, timeout=TIMEOUT, stream=True)
     response.raise_for_status()

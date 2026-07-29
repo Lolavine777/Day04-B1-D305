@@ -22,6 +22,15 @@ def domain(url: str) -> str:
         return ""
 
 
+def is_social_post(url: str, screenname: str | None = None) -> bool:
+    parsed = urlparse(url)
+    host = parsed.netloc.lower().removeprefix("www.")
+    parts = [part for part in parsed.path.split("/") if part]
+    if host not in {"x.com", "twitter.com"} or len(parts) < 3 or parts[1].lower() != "status" or not parts[2]:
+        return False
+    return screenname is None or parts[0].lower() == screenname.lstrip("@").lower()
+
+
 def fold_text(text: str) -> str:
     decomposed = unicodedata.normalize("NFD", text.lower())
     return "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
@@ -35,4 +44,3 @@ def terms(text: str) -> set[str]:
     }
     folded = fold_text(text)
     return {term for term in re.findall(r"[a-z0-9]+", folded) if len(term) > 1 and term not in stopwords}
-
