@@ -116,3 +116,16 @@ tools:
         max_pages: {type: integer, default: 5, description: "Số trang"}
         max_chars: {type: integer, default: 8000, description: "Số ký tự"}
       required: [arxiv_url]
+
+  - name: dedupe
+    description: "Remove duplicate research items after the items have already been collected. Preserve the first occurrence and original order. Never use this as an initial search tool."
+    parameters:
+      type: object
+      properties:
+        items:
+          type: array
+          default: []
+          description: "Research items that have already been collected."
+          items:
+            type: object
+      required: [items]
