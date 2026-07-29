@@ -79,13 +79,13 @@ tools:
 
   # ---------------- Bonus tools ----------------
   - name: send
-    description: "Gửi một đoạn văn bản đi."
+    description: "Send plain text to the configured Telegram destination only after the user explicitly confirmed the exact text and destination in the current conversation. For an unconfirmed send/post/publish request, call clarify with response_type=yes_no instead of this tool."
     parameters:
       type: object
       properties:
-        text: {type: string, default: "", description: "Nội dung"}
-        confirmed: {type: boolean, default: false, description: "Cờ xác nhận"}
-      required: [text]
+        text: {type: string, default: "", description: "Exact non-empty plain-text message confirmed by the user."}
+        confirmed: {type: boolean, default: false, description: "Must be true only after explicit user confirmation in the current conversation."}
+      required: [text, confirmed]
 
   - name: policy
     description: "Tìm trong tài liệu nội bộ."
