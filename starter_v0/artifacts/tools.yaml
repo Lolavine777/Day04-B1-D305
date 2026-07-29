@@ -79,12 +79,12 @@ tools:
 
   # ---------------- Bonus tools ----------------
   - name: send
-    description: "Gửi một đoạn văn bản đi."
+    description: "Send text to Telegram only after explicit confirmation from the user. Before confirmation, use clarify with response_type=yes_no and do not call send."
     parameters:
       type: object
       properties:
         text: {type: string, default: "", description: "Nội dung"}
-        confirmed: {type: boolean, default: false, description: "Cờ xác nhận"}
+        confirmed: {type: boolean, default: false, description: "Set true only after explicit confirmation from the user."}
       required: [text]
 
   - name: policy
