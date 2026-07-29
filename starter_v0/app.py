@@ -256,6 +256,8 @@ def render_turn(turn: dict[str, Any]) -> None:
                 "Backend không khả dụng — phản hồi bên dưới là câu trả lời "
                 "mặc định của chế độ dự phòng."
             )
+            if turn.get("error"):
+                st.caption(guardrails.fallback_hint(turn["error"]))
             st.write(turn.get("assistant_text") or "No response text.")
         elif status == "blocked_by_guardrail":
             st.warning(turn.get("assistant_text") or "Yêu cầu bị guardrail chặn.")

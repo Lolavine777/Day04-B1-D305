@@ -13,6 +13,7 @@ from guardrails import (
     check_tool_call,
     detect_injection,
     detect_sensitive_content,
+    fallback_hint,
     fallback_response,
     mask_pii,
     pre_guard,
@@ -231,6 +232,20 @@ class FallbackResponseTests(unittest.TestCase):
     def test_news_request_gets_news_guidance(self) -> None:
         response = fallback_response("Tin tức AI hôm nay có gì?")
         self.assertNotEqual(response, fallback_response("câu hỏi ngẫu nhiên xyz"))
+
+
+class FallbackHintTests(unittest.TestCase):
+    def test_missing_api_key_hints_env_setup(self) -> None:
+        hint = fallback_hint("RuntimeError: Missing API key env var: OPENROUTER_API_KEY")
+        self.assertIn(".env", hint)
+
+    def test_network_error_hints_connectivity(self) -> None:
+        hint = fallback_hint("ConnectionError: Max retries exceeded with url")
+        self.assertIn("mạng", hint.lower())
+
+    def test_unknown_error_gets_generic_hint(self) -> None:
+        hint = fallback_hint("ValueError: something odd")
+        self.assertTrue(hint)
 
 
 class FallbackProviderTests(unittest.TestCase):
