@@ -6,9 +6,14 @@
 
 ## Team
 
-- Team:
+- Team: Team B1
 - Members:
-- Provider/model:
+  - Nguyễn Đăng Long - 2A202601934
+  - Lê Đăng Tấn - 2A202601916
+  - Đào Minh Chiến - 2A202601184
+  - Vũ Hữu An - 2A202601078
+  - Nguyễn Trần Nghĩa - 2A202601664
+- Provider/model: (Chờ xác nhận từ người dùng)
 
 ---
 
@@ -16,41 +21,38 @@
 
 ## A1. Agent này làm được gì
 
-> 1–2 câu mô tả agent dùng để làm gì.
-
-Ví dụ: "Research agent: tìm tin theo từ khóa / theo tài khoản, đọc URL và tổng hợp thành digest."
+Research Agent đa năng của nhóm B1: Hỗ trợ tìm kiếm tin tức trên Web, tra cứu bài đăng Twitter/X, đọc & tóm tắt trang web, tra cứu tài liệu nội bộ, tự động lọc trùng dữ liệu research (`dedupe`), và yêu cầu xác nhận trước khi thực hiện các hành động nhạy cảm.
 
 **Link dùng thử (truy cập được trong showdown):**
 
-> Dán public URL nếu người khác cần mở từ máy riêng; localhost cũng được nếu demo trực tiếp trên máy trình chiếu. Streamlit được khuyến nghị, nhưng nhóm có thể dùng bất kỳ framework nào.
->
-> URL:
+> URL: (Chờ cấu hình deployment / Cloudflare Tunnel)
 
 ## A2. Tool agent có
 
-> Liệt kê các tool agent đang dùng. Mỗi tool 1 dòng: tên + làm được gì.
-
 | Tên tool | Làm được gì | Tool mới nhóm thêm? |
 |---|---|---|
-| clarify | hỏi lại người dùng khi thiếu thông tin | không |
-|  |  |  |
-|  |  |  |
+| clarify | Hỏi lại người dùng khi thiếu thông tin hoặc cần xác nhận yes/no | không |
+| timeline | Lấy các bài đăng gần đây của một tài khoản Twitter | không |
+| social_search | Tìm kiếm bài đăng Twitter theo từ khóa | không |
+| lookup | Tìm kiếm tin tức trên Web | không |
+| fetch | Đọc nội dung chi tiết của trang web từ URL | không |
+| format | Định dạng danh sách kết quả thành markdown digest | không |
+| dedupe | Lọc các kết quả research bị lặp (theo URL / Title) | có (Team B1) |
 
 ## A3. Câu hỏi mẫu để thử
 
-> 3–5 câu hỏi/yêu cầu mẫu để team khác tự thử agent ngay.
-
-1.
-2.
-3.
+1. "Tin tức mới nhất về công nghệ AI tuần này là gì?"
+2. "Tóm tắt bài viết tại link: https://openai.com/index/gpt-4o-mini/"
+3. "Tóm tắt 5 tweet mới nhất giúp mình" (Kiểm tra phản hồi khi thiếu tên tài khoản)
+4. "Đăng bản tin này lên Telegram giúp mình" (Kiểm tra xác nhận trước khi gửi)
 
 ## A4. Kịch bản demo đã rehearse
 
-> Chuẩn bị 3–5 scenario. Mỗi scenario cần cho thấy tool đã làm gì và một thay đổi cụ thể giữa các version.
-
 | Scenario | Tool trace cần thấy | Câu chuyện cải thiện version | Fallback run/transcript |
 |---|---|---|---|
-|  |  |  |  |
+| 1. Tra cứu tin tức & Đọc URL | `lookup` -> `fetch` -> `dedupe` -> `format` | v0 chọn tool chưa chuẩn; v1+ gọi đúng luồng và tự lọc lặp kết quả | `transcripts/demo_research.transcript.json` |
+| 2. Thiếu thông tin bắt buộc | `clarify` (response_type="text") | v0 tự đoán bừa người dùng; v1+ dừng lại hỏi xin thông tin còn thiếu | `transcripts/demo_clarify.transcript.json` |
+| 3. Xác nhận hành động nhạy cảm | `clarify` (response_type="yes_no") | v0 kích hoạt tự gửi; v1+ buộc phải xin xác nhận Đồng ý/Không trước khi gửi | `transcripts/demo_confirm.transcript.json` |
 
 ---
 
