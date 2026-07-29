@@ -71,7 +71,7 @@ Fill from `artifacts/version_log.csv` and `runs/*.json`.
 
 | Version | Prompt/tool change | Hypothesis | Metric name | Before | After | Run File |
 |---|---|---|---|---:|---:|---|
-| v0 | baseline |  |  |  |  |  |
+| v0 | baseline (no artifact change) | The baseline's guess-and-act policy causes missing-information and confirmation-boundary failures | case_accuracy | N/A | 0.65 | `runs/v0_B_base_openrouter_20260729T153950029531.json` |
 | v1 |  |  |  |  |  |  |
 | v2 |  |  |  |  |  |  |
 | v3 |  |  |  |  |  |  |
