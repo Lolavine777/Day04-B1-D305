@@ -72,8 +72,8 @@ Fill from `artifacts/version_log.csv` and `runs/*.json`.
 | Version | Prompt/tool change | Hypothesis | Metric name | Before | After | Run File |
 |---|---|---|---|---:|---:|---|
 | v0 | baseline (no artifact change) | The baseline's guess-and-act policy causes missing-information and confirmation-boundary failures | case_accuracy | N/A | 0.65 | `runs/v0_B_base_openrouter_20260729T153950029531.json` |
-| v1 |  |  |  |  |  |  |
-| v2 |  |  |  |  |  |  |
+| v1 | artifacts/system_prompt.md | Explicit scope checks and confirmation boundaries will prevent guessing missing identifiers and unsafe send calls | case_accuracy | 0.65 | 0.90 | `runs/v1_B_base_openrouter_20260729T160816126255.json` |
+| v2 | artifacts/tools.yaml | Explicit clarify response types and route-specific argument conventions will fix missing URL and news carryover failures | case_accuracy | 0.90 | 1.00 | `runs/v2_B_base_openrouter_20260729T161541190510.json` |
 | v3 |  |  |  |  |  |  |
 
 ## B2. Failure analysis
