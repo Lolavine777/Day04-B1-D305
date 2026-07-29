@@ -5,8 +5,8 @@ Post-guard: mask PII in output, block dangerous tool calls before execution.
 Fallback  : rule-based default responses so the product keeps answering when the
             model backend is unavailable, always flagged with FALLBACK_NOTICE.
 
-Stdlib only. The eval path (run_eval.py -> agent.py) never imports this module,
-so guardrails change product behavior without touching measured eval behavior.
+The eval path (run_eval.py -> agent.py) never imports this module, so guardrails
+change product behavior without touching measured eval behavior.
 """
 
 from __future__ import annotations
@@ -18,11 +18,6 @@ from urllib.parse import urlparse
 
 MAX_INPUT_CHARS = 4000
 MAX_LIST_LIMIT = 20
-
-KNOWN_TOOLS = {
-    "clarify", "timeline", "social_search", "lookup", "fetch", "format",
-    "send", "policy", "papers", "paper_text", "dedupe",
-}
 
 URL_ARG_KEYS = ("url", "arxiv_url")
 LIMIT_ARG_KEYS = ("limit", "max_results", "top_k", "max_pages")
@@ -162,7 +157,9 @@ def _is_private_url(raw_url: str) -> bool:
 
 def check_tool_call(name: str, args: dict[str, Any]) -> dict[str, Any]:
     """Verdict for one tool call: {"allowed", "reason", "args" (sanitized)}."""
-    if name not in KNOWN_TOOLS:
+    from tools import TOOL_FUNCTIONS
+
+    if name not in TOOL_FUNCTIONS:
         return {"allowed": False, "reason": f"unknown tool {name!r}", "args": args}
 
     if name == "send" and args.get("confirmed"):
