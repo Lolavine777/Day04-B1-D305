@@ -44,6 +44,7 @@ HISTORY_WINDOW = 5
 MAX_TOOL_ROUNDS = 4
 DEFAULT_VERSION = "v3"
 SECRET_ENV_MARKERS = ("KEY", "TOKEN", "SECRET", "PASSWORD")
+SHOW_DEVELOPER_DETAILS_DEFAULT = False
 
 
 def normalize_version_label(value: str) -> str:
@@ -442,35 +443,55 @@ def run_turn(
     return turn_record
 
 
-def render_tool_event(event: dict[str, Any], event_index: int) -> None:
-    tool_name = event.get("tool", "unknown")
-    with st.container(border=True):
-        st.markdown(f"**⚙️ Tool {event_index} · `{tool_name}`**")
+def tool_event_summary(event: dict[str, Any]) -> str:
+    tool_name = str(event.get("tool") or "unknown")
+    result = event.get("result")
+    if isinstance(result, dict) and result.get("error"):
+        code = str(result.get("code") or result["error"])
+        return f"{tool_name} · {code.replace('_', ' ').lower()}"
+
+    parts = [tool_name, "success"]
+    if isinstance(result, dict):
+        items = result.get("items")
+        if isinstance(items, list):
+            label = "result" if len(items) == 1 else "results"
+            parts.append(f"{len(items)} {label}")
+        if result.get("provider"):
+            parts.append(str(result["provider"]))
+    return " · ".join(parts)
+
+
+def render_tool_event(
+    event: dict[str, Any],
+    event_index: int,
+    *,
+    show_details: bool,
+) -> None:
+    st.markdown(f"**{event_index}. {tool_event_summary(event)}**")
+    result = event.get("result")
+    if isinstance(result, dict) and result.get("error"):
+        st.warning(
+            result.get("message")
+            or str(result.get("code") or result["error"])
+        )
+
+    if show_details:
         st.caption("Arguments")
         st.json(event.get("args", {}))
-
-        result = event.get("result")
-        if isinstance(result, dict) and result.get("error"):
-            message = result.get("message")
-            error_text = str(result["error"])
-            if message:
-                error_text = f"{error_text}: {message}"
-            st.error(error_text)
-        else:
-            if isinstance(result, dict) and result.get("provider"):
-                st.caption(
-                    f"Provider: {result['provider']} · "
-                    f"Coverage: {result.get('coverage', 'direct API')}"
-                )
-            st.caption("Result")
-            st.json(result)
+        st.caption("Result")
+        st.json(result)
 
 
 def render_trace(turn: dict[str, Any]) -> None:
     rounds = turn.get("rounds", [])
     tool_count = len(turn.get("tool_events", []))
     label = f"⚡ Trace · {len(rounds)} round(s) · {tool_count} tool event(s)"
-    with st.expander(label):
+    with st.expander(label, expanded=False):
+        show_details = st.toggle(
+            "Show developer details",
+            value=SHOW_DEVELOPER_DETAILS_DEFAULT,
+            key=f"trace_details_{turn.get('started_at', '')}",
+        )
         for round_position, round_record in enumerate(rounds):
             if round_position:
                 st.divider()
@@ -484,7 +505,11 @@ def render_trace(turn: dict[str, Any]) -> None:
             if not events:
                 st.caption("No tool call in this round.")
             for event_index, event in enumerate(events, start=1):
-                render_tool_event(event, event_index)
+                render_tool_event(
+                    event,
+                    event_index,
+                    show_details=show_details,
+                )
 
 
 def render_turn(turn: dict[str, Any]) -> None:
@@ -524,7 +549,6 @@ def render_sidebar() -> tuple[str, str | None, str]:
     locked = conversation is not None
 
     with st.sidebar:
-        st.markdown('<p class="agent-kicker">Configuration</p>', unsafe_allow_html=True)
         st.header("Research run")
         if locked and st.button("＋ New conversation", use_container_width=True):
             clear_conversation()
@@ -536,42 +560,42 @@ def render_sidebar() -> tuple[str, str | None, str]:
             disabled=locked,
             help="Credentials are read from environment variables.",
         )
-        model_text = st.text_input(
-            "Model (optional)",
-            placeholder="Use provider default",
-            disabled=locked,
-        ).strip()
-        version_label = normalize_version_label(
-            st.text_input(
-                "Version",
-                value=DEFAULT_VERSION,
-                disabled=locked,
-                help="Combined with the current prompt and tool hashes.",
-            )
-        )
-
         active_provider = conversation["provider"] if locked else provider
         status = secret_status(active_provider)
         provider_key = PROVIDER_ENV_VARS[active_provider]
-        st.divider()
-        st.markdown('<p class="agent-kicker">System status</p>', unsafe_allow_html=True)
         st.markdown(
             (
                 '<div class="agent-status-grid">'
                 f'<span class="agent-status"><span class="agent-status-mark {"ready" if status[provider_key] else ""}"></span>'
-                f'{html.escape(active_provider)} · {"Configured" if status[provider_key] else "Missing"}</span>'
+                f'{html.escape(active_provider)} · {"Key set" if status[provider_key] else "Missing"}</span>'
                 f'<span class="agent-status"><span class="agent-status-mark {"ready" if status["TAVILY_API_KEY"] else ""}"></span>'
-                f'Tavily · {"Configured" if status["TAVILY_API_KEY"] else "Missing"}</span>'
+                f'Tavily · {"Key set" if status["TAVILY_API_KEY"] else "Missing"}</span>'
                 f'<span class="agent-status"><span class="agent-status-mark {"ready" if status["FIRECRAWL_API_KEY"] else ""}"></span>'
-                f'Firecrawl · {"Configured" if status["FIRECRAWL_API_KEY"] else "Optional"}</span>'
+                f'Firecrawl · {"Key set" if status["FIRECRAWL_API_KEY"] else "Optional"}</span>'
                 "</div>"
             ),
             unsafe_allow_html=True,
         )
         st.caption(
-            "Values stay in local `.env` or root-level Streamlit Secrets. "
-            "They are never stored in transcripts."
+            "Key presence is shown here. The first tool request validates it."
         )
+        with st.expander("Advanced", expanded=False):
+            model_text = st.text_input(
+                "Model (optional)",
+                placeholder="Use provider default",
+                disabled=locked,
+            ).strip()
+            version_label = normalize_version_label(
+                st.text_input(
+                    "Version",
+                    value=DEFAULT_VERSION,
+                    disabled=locked,
+                    help=(
+                        "Combined with the current prompt and tool hashes."
+                    ),
+                )
+            )
+
         if locked:
             st.divider()
             st.caption("Active transcript")
