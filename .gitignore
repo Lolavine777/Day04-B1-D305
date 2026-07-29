@@ -13,6 +13,7 @@ out/
 
 # Local runtime artifacts
 starter_v0/transcripts/*.transcript.json
+.playwright-mcp/
 
 # Tool-generated repository instructions (not application source)
 /AGENTS.md
