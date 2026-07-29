@@ -247,6 +247,14 @@ class FallbackHintTests(unittest.TestCase):
         hint = fallback_hint("RuntimeError: Missing API key env var: OPENROUTER_API_KEY")
         self.assertIn(".env", hint)
 
+    def test_missing_api_key_hint_covers_streamlit_secrets(self) -> None:
+        hint = fallback_hint(
+            "RuntimeError: Missing API key env var: OPENROUTER_API_KEY"
+        )
+        self.assertIn("Streamlit", hint)
+        self.assertIn("OPENROUTER_API_KEY", hint)
+        self.assertIn(".env", hint)
+
     def test_network_error_hints_connectivity(self) -> None:
         hint = fallback_hint("ConnectionError: Max retries exceeded with url")
         self.assertIn("mạng", hint.lower())

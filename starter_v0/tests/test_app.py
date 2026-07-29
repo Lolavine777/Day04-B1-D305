@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import app
 from app import create_conversation, run_turn, sanitize_error_text
 from providers.base import ModelResponse, ToolCall
 
@@ -173,6 +174,14 @@ class AppLoopTests(unittest.TestCase):
         self.assertNotIn("https://", safe)
         self.assertNotIn("another-secret", safe)
         self.assertIn("[redacted-url]", safe)
+
+    def test_fallback_hint_survives_stale_guardrails_module(self) -> None:
+        hint_builder = getattr(app, "fallback_hint", None)
+        self.assertIsNotNone(hint_builder)
+        with patch.object(app.guardrails, "fallback_hint", None):
+            hint = hint_builder("RuntimeError: backend unavailable")
+
+        self.assertIn("khởi động lại", hint.lower())
 
 
 if __name__ == "__main__":

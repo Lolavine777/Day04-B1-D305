@@ -249,6 +249,16 @@ def sanitize_error_text(value: str) -> str:
     return safe_value[:800]
 
 
+def fallback_hint(error_text: str) -> str:
+    hint_builder = getattr(guardrails, "fallback_hint", None)
+    if callable(hint_builder):
+        return hint_builder(error_text)
+    return (
+        "Không tải được chẩn đoán backend mới nhất. "
+        "Hãy khởi động lại app rồi thử lại."
+    )
+
+
 def sanitize_tool_errors(value: Any) -> Any:
     if isinstance(value, list):
         return [sanitize_tool_errors(item) for item in value]
@@ -462,7 +472,7 @@ def render_turn(turn: dict[str, Any]) -> None:
                 "mặc định của chế độ dự phòng."
             )
             if turn.get("error"):
-                st.caption(guardrails.fallback_hint(turn["error"]))
+                st.caption(fallback_hint(turn["error"]))
             st.write(turn.get("assistant_text") or "No response text.")
         elif status == "blocked_by_guardrail":
             st.warning(turn.get("assistant_text") or "Yêu cầu bị guardrail chặn.")
@@ -495,7 +505,7 @@ def render_sidebar() -> tuple[str, str | None, str]:
             "Provider",
             SUPPORTED_PROVIDERS,
             disabled=locked,
-            help="Credentials are read from .env.",
+            help="Credentials are read from environment variables.",
         )
         model_text = st.text_input(
             "Model (optional)",
@@ -527,7 +537,10 @@ def render_sidebar() -> tuple[str, str | None, str]:
             ),
             unsafe_allow_html=True,
         )
-        st.caption("API keys stay in `.env` and are never displayed.")
+        st.caption(
+            "Credentials come from environment variables: local `.env` "
+            "or root-level Streamlit Cloud Secrets."
+        )
         if locked:
             st.divider()
             st.caption("Active transcript")

@@ -267,9 +267,10 @@ def fallback_hint(error_text: str) -> str:
     lowered = error_text.lower()
     if "missing api key" in lowered or "api key env var" in lowered:
         return (
-            "Nguyên nhân: thiếu API key của provider. Tạo file starter_v0/.env "
-            "(copy từ .env.example) và điền OPENROUTER_API_KEY (hoặc key của provider bạn chọn), "
-            "sau đó khởi động lại app."
+            "Nguyên nhân: thiếu API key của provider. "
+            "Local: tạo starter_v0/.env từ .env.example. "
+            "Streamlit Cloud: đặt OPENROUTER_API_KEY ở cấp root trong "
+            "App settings > Secrets, rồi reboot app."
         )
     if any(word in lowered for word in ("connection", "timeout", "timed out", "max retries", "getaddrinfo")):
         return "Nguyên nhân: lỗi mạng khi gọi provider. Kiểm tra kết nối internet rồi thử lại."
