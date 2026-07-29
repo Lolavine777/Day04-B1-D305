@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/**": {
+      "excludeFiles": "{.next,.git,node_modules,starter_v0/.venv,starter_v0/runs,starter_v0/transcripts,starter_v0/analysis,starter_v0/tests}/**",
+      "maxDuration": 300
+    }
+  }
+}

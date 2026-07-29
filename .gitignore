@@ -4,6 +4,10 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .venv/
+.next/
+node_modules/
+.vercel/
+out/
 
 # Secrets — never commit real keys
 .env

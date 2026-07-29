@@ -14,6 +14,7 @@ class ToolCall:
 class ModelResponse:
     text: str | None = None
     tool_calls: list[ToolCall] = field(default_factory=list)
+    usage: dict[str, int | float] = field(default_factory=dict)
     raw: Any | None = None
 
 

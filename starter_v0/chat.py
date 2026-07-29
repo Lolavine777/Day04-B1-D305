@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from env_loader import load_lab_env
 from providers import make_provider
@@ -56,6 +57,30 @@ def execute_tool_call(call: ToolCall) -> dict[str, Any]:
     return {"tool": call.name, "args": call.args, "result": result}
 
 
+def _emit(
+    callback: Callable[[dict[str, Any]], None] | None,
+    event_type: str,
+    **payload: Any,
+) -> None:
+    if callback is None:
+        return
+    try:
+        callback({"type": event_type, **payload})
+    except Exception:
+        # UI telemetry must never break the canonical agent loop.
+        return
+
+
+def _merge_usage(
+    total: dict[str, int | float],
+    update: dict[str, int | float] | None,
+) -> None:
+    for key, value in (update or {}).items():
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            continue
+        total[key] = total.get(key, 0) + value
+
+
 def tool_results_message(events: list[dict[str, Any]]) -> dict[str, str]:
     return {
         "role": "user",
@@ -84,38 +109,198 @@ def run_model_tool_loop(
     tools: list[dict[str, Any]],
     model: str | None,
     max_tool_rounds: int,
+    event_callback: Callable[[dict[str, Any]], None] | None = None,
+    blocked_tools: set[str] | None = None,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> dict[str, Any]:
+    started_at = time.perf_counter()
+    first_token_at: float | None = None
     working_messages = list(messages)
     rounds: list[dict[str, Any]] = []
     all_tool_events: list[dict[str, Any]] = []
+    usage_total: dict[str, int | float] = {}
+    blocked = blocked_tools or set()
+
+    _emit(event_callback, "run_started")
+
+    def is_cancelled() -> bool:
+        if should_cancel is None:
+            return False
+        try:
+            return bool(should_cancel())
+        except Exception:
+            return False
+
+    def finish(result: dict[str, Any]) -> dict[str, Any]:
+        latency_ms = round((time.perf_counter() - started_at) * 1000, 1)
+        ttft_ms = (
+            round((first_token_at - started_at) * 1000, 1)
+            if first_token_at is not None
+            else None
+        )
+        result["usage"] = usage_total
+        result["latency_ms"] = latency_ms
+        result["ttft_ms"] = ttft_ms
+        _emit(
+            event_callback,
+            "run_completed",
+            status=result["status"],
+            assistant_text=result["assistant_text"],
+            usage=usage_total,
+            latency_ms=latency_ms,
+            ttft_ms=ttft_ms,
+        )
+        return result
 
     for round_index in range(1, max_tool_rounds + 1):
-        response = provider.complete(working_messages, tools, model=model, temperature=0.0)
+        if is_cancelled():
+            return finish(
+                {
+                    "status": "cancelled",
+                    "assistant_text": "Request cancelled.",
+                    "rounds": rounds,
+                    "tool_events": all_tool_events,
+                }
+            )
+        _emit(event_callback, "round_started", round=round_index)
+        model_started_at = time.perf_counter()
+        stream_mode = "buffered"
+
+        def on_text_delta(delta: str) -> None:
+            nonlocal first_token_at
+            if first_token_at is None:
+                first_token_at = time.perf_counter()
+            _emit(
+                event_callback,
+                "assistant_delta",
+                round=round_index,
+                delta=delta,
+            )
+
+        complete_stream = getattr(provider, "complete_stream", None)
+        if event_callback is not None and callable(complete_stream):
+            stream_mode = "streaming"
+            response = complete_stream(
+                working_messages,
+                tools,
+                model=model,
+                temperature=0.0,
+                on_text_delta=on_text_delta,
+            )
+        else:
+            response = provider.complete(
+                working_messages,
+                tools,
+                model=model,
+                temperature=0.0,
+            )
+            if event_callback is not None and response.text:
+                on_text_delta(response.text)
+
+        model_latency_ms = round(
+            (time.perf_counter() - model_started_at) * 1000,
+            1,
+        )
+        response_usage = getattr(response, "usage", {}) or {}
+        _merge_usage(usage_total, response_usage)
         calls = response.tool_calls
         round_record: dict[str, Any] = {
             "round": round_index,
             "assistant_text": response.text,
             "tool_calls": [{"name": call.name, "args": call.args} for call in calls],
             "tool_results": [],
+            "usage": response_usage,
+            "model_latency_ms": model_latency_ms,
+            "stream_mode": stream_mode,
         }
+        _emit(
+            event_callback,
+            "model_completed",
+            round=round_index,
+            has_tool_calls=bool(calls),
+            usage=response_usage,
+            latency_ms=model_latency_ms,
+            stream_mode=stream_mode,
+        )
 
         if not calls:
             rounds.append(round_record)
-            return {
-                "status": "answered",
-                "assistant_text": response.text or "",
-                "rounds": rounds,
-                "tool_events": all_tool_events,
-            }
+            return finish(
+                {
+                    "status": "answered",
+                    "assistant_text": response.text or "",
+                    "rounds": rounds,
+                    "tool_events": all_tool_events,
+                }
+            )
 
         working_messages.append(assistant_tool_message(response.text, calls))
         non_clarification_events: list[dict[str, Any]] = []
 
-        for call in calls:
+        for call_index, call in enumerate(calls, start=1):
+            if is_cancelled():
+                rounds.append(round_record)
+                return finish(
+                    {
+                        "status": "cancelled",
+                        "assistant_text": "Request cancelled.",
+                        "rounds": rounds,
+                        "tool_events": all_tool_events,
+                    }
+                )
+            tool_id = f"r{round_index}-t{call_index}"
             print(f"🔧 {call.name}({json.dumps(call.args, ensure_ascii=False, sort_keys=True)})")
-            event = execute_tool_call(call)
+            _emit(
+                event_callback,
+                "tool_started",
+                round=round_index,
+                tool_id=tool_id,
+                tool=call.name,
+                args=call.args,
+            )
+            tool_started_at = time.perf_counter()
+            if call.name in blocked:
+                event = {
+                    "tool": call.name,
+                    "args": call.args,
+                    "result": {
+                        "error": "tool_disabled",
+                        "message": "This tool is disabled in the public web workspace.",
+                    },
+                }
+            else:
+                event = execute_tool_call(call)
+            tool_latency_ms = round(
+                (time.perf_counter() - tool_started_at) * 1000,
+                1,
+            )
+            tool_result = event.get("result", {})
+            tool_status = (
+                "error"
+                if isinstance(tool_result, dict) and tool_result.get("error")
+                else "success"
+            )
+            event.update(
+                {
+                    "tool_id": tool_id,
+                    "round": round_index,
+                    "status": tool_status,
+                    "latency_ms": tool_latency_ms,
+                }
+            )
             round_record["tool_results"].append(event)
             all_tool_events.append(event)
+            _emit(
+                event_callback,
+                "tool_completed",
+                round=round_index,
+                tool_id=tool_id,
+                tool=call.name,
+                args=call.args,
+                result=tool_result,
+                status=tool_status,
+                latency_ms=tool_latency_ms,
+            )
 
             # Detect the clarification/pause tool by its output flag (rename-proof),
             # not by a hard-coded tool name.
@@ -123,24 +308,28 @@ def run_model_tool_loop(
             if isinstance(result, dict) and result.get("awaiting_user"):
                 question = result.get("question") or call.args.get("question") or "Bạn bổ sung thêm thông tin nhé."
                 rounds.append(round_record)
-                return {
-                    "status": "waiting_for_user",
-                    "assistant_text": question,
-                    "rounds": rounds,
-                    "tool_events": all_tool_events,
-                }
+                return finish(
+                    {
+                        "status": "waiting_for_user",
+                        "assistant_text": question,
+                        "rounds": rounds,
+                        "tool_events": all_tool_events,
+                    }
+                )
 
             non_clarification_events.append(event)
 
         rounds.append(round_record)
         working_messages.append(tool_results_message(non_clarification_events))
 
-    return {
-        "status": "max_tool_rounds",
-        "assistant_text": f"Stopped after {max_tool_rounds} tool rounds. Inspect the transcript for details.",
-        "rounds": rounds,
-        "tool_events": all_tool_events,
-    }
+    return finish(
+        {
+            "status": "max_tool_rounds",
+            "assistant_text": f"Stopped after {max_tool_rounds} tool rounds. Inspect the transcript for details.",
+            "rounds": rounds,
+            "tool_events": all_tool_events,
+        }
+    )
 
 
 def write_transcript(path: Path, transcript: dict[str, Any]) -> None:

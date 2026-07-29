@@ -1,52 +1,55 @@
 from __future__ import annotations
 
-import os
 from typing import Any
+from urllib.parse import urlparse
 
-import requests
-
-from tools._shared import TIMEOUT, err
+from tools.lookup.tool import web_search
 
 
-def _twitter_get(path: str, params: dict[str, Any]) -> dict[str, Any]:
-    key = os.getenv("RAPIDAPI_KEY")
-    host = os.getenv("RAPIDAPI_TWITTER_HOST", "twitter-api45.p.rapidapi.com")
-    if not key:
-        raise RuntimeError("Missing RAPIDAPI_KEY env var")
-    response = requests.get(
-        f"https://{host}{path}",
-        params=params,
-        headers={"x-rapidapi-key": key, "x-rapidapi-host": host},
-        timeout=TIMEOUT,
+def _is_x_status(url: str) -> bool:
+    parsed = urlparse(url)
+    host = parsed.netloc.lower().removeprefix("www.")
+    return host in {"x.com", "twitter.com"} and "/status/" in parsed.path
+
+
+def _social_items(
+    items: list[dict[str, Any]],
+    limit: int,
+) -> list[dict[str, Any]]:
+    return [
+        item
+        for item in items
+        if _is_x_status(str(item.get("url") or ""))
+    ][: int(limit or 5)]
+
+
+def search_tweets(
+    query: str = "",
+    search_type: str = "Latest",
+    limit: int = 5,
+) -> dict[str, Any]:
+    normalized_search_type = (
+        search_type if search_type in {"Latest", "Top"} else "Latest"
     )
-    response.raise_for_status()
-    return response.json()
-
-
-def _tweet_item(raw: dict[str, Any]) -> dict[str, Any]:
-    handle = raw.get("screen_name") or (raw.get("author") or {}).get("screen_name") or ""
-    tweet_id = raw.get("tweet_id") or raw.get("id") or ""
-    text = (raw.get("text") or "").strip()
+    timeframe = "week" if normalized_search_type == "Latest" else "month"
+    result = web_search(
+        query=f"site:x.com status {query}",
+        topic="general",
+        timeframe=timeframe,
+        max_results=int(limit or 5),
+    )
+    if result.get("error"):
+        return {
+            "tool": "search_tweets",
+            "provider": "tavily",
+            "error": result["error"],
+            "message": result.get("message", "Tavily search failed."),
+        }
     return {
-        "title": text.split("\n")[0][:120],
-        "summary": text,
-        "url": f"https://x.com/{handle}/status/{tweet_id}" if handle and tweet_id else "",
-        "source": f"@{handle}" if handle else "x.com",
-        "date": raw.get("created_at"),
-        "metrics": {"favorites": raw.get("favorites"), "retweets": raw.get("retweets"), "views": raw.get("views")},
+        "tool": "search_tweets",
+        "provider": "tavily",
+        "coverage": "public_web_index",
+        "query": query,
+        "search_type": normalized_search_type,
+        "items": _social_items(result.get("items", []), limit),
     }
-
-
-def _tweets_from(data: dict[str, Any], limit: int) -> list[dict[str, Any]]:
-    raw_items = data.get("timeline") or data.get("tweets") or []
-    items = [_tweet_item(item) for item in raw_items if item.get("tweet_id") or item.get("id")]
-    return items[: int(limit or 5)]
-
-
-def search_tweets(query: str = "", search_type: str = "Latest", limit: int = 5) -> dict[str, Any]:
-    try:
-        data = _twitter_get("/search.php", {"query": query, "search_type": search_type})
-        return {"tool": "search_tweets", "query": query, "search_type": search_type, "items": _tweets_from(data, limit)}
-    except Exception as exc:
-        return err("search_tweets", exc)
-

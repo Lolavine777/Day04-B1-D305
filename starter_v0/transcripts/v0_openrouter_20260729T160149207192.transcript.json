@@ -1,0 +1,28 @@
+{
+  "transcript_id": "v0_openrouter_20260729T160149207192",
+  "version": "v0",
+  "artifact_version": "v0+peb1c8179815b+t524055783c81",
+  "prompt_hash": "eb1c8179815bd79d34de7d326420bb99b3072e6e8ae96464c02d4411f905fc68",
+  "tools_hash": "524055783c818f8d9b6aef9db9e97dfc137027e8056d1d4f2b0a59a984a00ef3",
+  "provider": "openrouter",
+  "model": "openai/gpt-4o-mini",
+  "system_prompt": "artifacts\\system_prompt.md",
+  "tools": "artifacts\\tools.yaml",
+  "history_window": 5,
+  "max_tool_rounds": 4,
+  "created_at": "2026-07-29T16:01:49",
+  "updated_at": "2026-07-29T16:01:51",
+  "turns": [
+    {
+      "turn_index": 1,
+      "started_at": "2026-07-29T16:01:49",
+      "user": "hihihihi",
+      "status": "provider_error",
+      "assistant_text": null,
+      "rounds": [],
+      "tool_events": [],
+      "error": "APIConnectionError: Connection error.",
+      "ended_at": "2026-07-29T16:01:51"
+    }
+  ]
+}
