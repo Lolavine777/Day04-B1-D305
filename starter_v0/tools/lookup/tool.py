@@ -66,4 +66,9 @@ def web_search(
         } for item in data.get("results", [])]
         return {"tool": "web_search", "query": query, "topic": topic, "timeframe": timeframe, "items": items}
     except Exception as exc:
-        return err("web_search", exc)
+        return err(
+            "web_search",
+            exc,
+            service="Tavily",
+            secret_name="TAVILY_API_KEY",
+        )

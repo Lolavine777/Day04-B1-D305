@@ -35,6 +35,51 @@ class AppLoopTests(unittest.TestCase):
         self.assertIn("--agent-ink:", css)
         self.assertIn("color: var(--agent-ink)", css)
         self.assertNotIn("radial-gradient", css)
+        self.assertNotIn("data-baseweb", css)
+        self.assertNotIn("react-aria", css.lower())
+
+    def test_tool_event_summary_reports_success_count_and_provider(
+        self,
+    ) -> None:
+        summary_builder = getattr(app, "tool_event_summary", None)
+        self.assertTrue(callable(summary_builder))
+        summary = summary_builder(
+            {
+                "tool": "social_search",
+                "result": {
+                    "provider": "tavily",
+                    "items": [
+                        {"url": "https://x.com/example/status/1"}
+                    ],
+                },
+            }
+        )
+
+        self.assertEqual(
+            summary,
+            "social_search · success · 1 result · tavily",
+        )
+
+    def test_tool_event_summary_reports_safe_failure_code(self) -> None:
+        summary_builder = getattr(app, "tool_event_summary", None)
+        self.assertTrue(callable(summary_builder))
+        summary = summary_builder(
+            {
+                "tool": "lookup",
+                "result": {
+                    "error": "HTTPError",
+                    "code": "authentication_failed",
+                },
+            }
+        )
+
+        self.assertEqual(summary, "lookup · authentication failed")
+
+    def test_developer_details_are_hidden_by_default(self) -> None:
+        self.assertIs(
+            getattr(app, "SHOW_DEVELOPER_DETAILS_DEFAULT", None),
+            False,
+        )
 
     def test_setup_template_contains_names_only(self) -> None:
         template = app.setup_template("openrouter")

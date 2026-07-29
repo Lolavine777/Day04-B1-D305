@@ -1,0 +1,11 @@
+[theme]
+base = "light"
+primaryColor = "#0F766E"
+backgroundColor = "#F7F9F8"
+secondaryBackgroundColor = "#EEF2F1"
+textColor = "#17211F"
+codeBackgroundColor = "#F1F5F4"
+borderColor = "#CBD5D1"
+baseRadius = "8px"
+buttonRadius = "8px"
+showWidgetBorder = true
