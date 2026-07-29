@@ -9,43 +9,43 @@
 tools:
   # ---------------- Core tools ----------------
   - name: clarify
-    description: "Gửi một câu hỏi cho người dùng."
+    description: "Ask the user for missing information or confirmation. Always pass response_type explicitly: text for a missing handle or URL, yes_no before send/post/publish, and choice only when options are supplied."
     parameters:
       type: object
       properties:
-        question: {type: string, default: "", description: "Câu hỏi"}
-        response_type: {type: string, enum: [text, yes_no, choice], default: "text", description: "Kiểu trả lời"}
-        options: {type: array, default: [], items: {type: string}, description: "Các lựa chọn"}
+        question: {type: string, default: "", description: "A concise question that requests only the missing information or confirmation."}
+        response_type: {type: string, enum: [text, yes_no, choice], default: "text", description: "Pass explicitly. Use text for a missing value, yes_no for confirmation, or choice with options."}
+        options: {type: array, default: [], items: {type: string}, description: "Choices used only when response_type=choice."}
       required: [question]
 
   - name: timeline
-    description: "Lấy các bài đăng gần đây."
+    description: "Get recent posts from a single account when the user asks for posts by a named person or account. Not for posts about a topic; use social_search for topic or keyword requests."
     parameters:
       type: object
       properties:
-        screenname: {type: string, default: "", description: "Tên tài khoản"}
-        limit: {type: integer, default: 5, description: "Số lượng"}
+        screenname: {type: string, default: "", description: "Account handle without @. Map explicit well-known names, such as Sam Altman to sama, Elon Musk to elonmusk, and Andrej Karpathy to karpathy."}
+        limit: {type: integer, default: 5, description: "Number of posts. Preserve an explicit user limit and later corrections."}
       required: [screenname]
 
   - name: social_search
-    description: "Tìm trên mạng xã hội."
+    description: "Search social posts about a topic or keyword. Not for a single account timeline. Use search_type=Top for popular or top posts and Latest otherwise."
     parameters:
       type: object
       properties:
-        query: {type: string, default: "", description: "Từ khóa"}
-        search_type: {type: string, enum: [Latest, Top], default: "Latest", description: "Cách sắp xếp"}
-        limit: {type: integer, default: 5, description: "Số lượng"}
+        query: {type: string, default: "", description: "Topic or keyword exactly requested by the user."}
+        search_type: {type: string, enum: [Latest, Top], default: "Latest", description: "Use Top for popular/top requests; use Latest otherwise."}
+        limit: {type: integer, default: 5, description: "Number of posts. Preserve an explicit user limit."}
       required: [query]
 
   - name: lookup
-    description: "Tra cứu thông tin trên internet."
+    description: "Search the web or news. Use for general web research and current news, not social posts and not an explicit URL that should use fetch."
     parameters:
       type: object
       properties:
-        query: {type: string, default: "", description: "Truy vấn"}
-        topic: {type: string, enum: [general, news], default: "general", description: "Phân loại"}
-        timeframe: {type: string, enum: [day, week, month, year], default: "week", description: "Khoảng thời gian"}
-        max_results: {type: integer, default: 5, description: "Số kết quả"}
+        query: {type: string, default: "", description: "Subject only. Do not append words such as news when topic already carries that intent."}
+        topic: {type: string, enum: [general, news], default: "general", description: "Use topic=news for news or current-event requests; otherwise use general."}
+        timeframe: {type: string, enum: [day, week, month, year], default: "week", description: "Map today=day, this week=week, this month=month, and this year=year. Preserve it across turns unless corrected."}
+        max_results: {type: integer, default: 5, description: "Maximum number of web results."}
       required: [query]
 
   - name: fetch
