@@ -56,7 +56,9 @@ Preflight:
 python scripts/preflight_provider.py --provider openrouter
 ```
 
-Preflight chỉ kiểm tra model provider có trả structured tool call. Nó không kiểm tra Tavily, Firecrawl, RapidAPI, arXiv hoặc Telegram; dùng các smoke test bên dưới cho từng tool API.
+Preflight chỉ kiểm tra model provider có trả structured tool call.
+
+Nó không kiểm tra Tavily, Firecrawl, arXiv hoặc Telegram; dùng các smoke test bên dưới cho từng tool API.
 
 ## 3. Gate matrix
 
@@ -96,7 +98,7 @@ python -c "from pathlib import Path; from env_loader import load_lab_env; load_l
 
 Thay tên/args theo tool của nhóm. PASS khi registry tìm thấy tool, arguments hợp lệ, `error` là `None`, và kết quả đúng contract. Với action tool, chỉ dùng dry-run/`confirmed=False` cho quicktest.
 
-## 5. `[CORE]` Tavily — `lookup`
+## 5. `[CORE]` Tavily — `lookup`, `timeline`, `social_search`
 
 - [API key](https://app.tavily.com)
 - [Documentation](https://docs.tavily.com)
@@ -111,6 +113,8 @@ Smoke test:
 
 ```bash
 python -c "from pathlib import Path; from env_loader import load_lab_env; load_lab_env(Path.cwd()); from tools import TOOL_FUNCTIONS as T; r=T['lookup']('AI', max_results=1); items=r.get('items') or []; print({'error':r.get('error'), 'message':r.get('message'), 'item_count':len(items), 'first_title':items[0].get('title') if items else None})"
+python -c "from pathlib import Path; from env_loader import load_lab_env; load_lab_env(Path.cwd()); from tools import TOOL_FUNCTIONS as T; r=T['timeline']('sama', limit=1); items=r.get('items') or []; print({'error':r.get('error'), 'message':r.get('message'), 'item_count':len(items), 'first_title':items[0].get('title') if items else None})"
+python -c "from pathlib import Path; from env_loader import load_lab_env; load_lab_env(Path.cwd()); from tools import TOOL_FUNCTIONS as T; r=T['social_search']('OpenAI', limit=1); items=r.get('items') or []; print({'error':r.get('error'), 'message':r.get('message'), 'item_count':len(items), 'first_title':items[0].get('title') if items else None})"
 ```
 
 ## 6. `[CORE]` Firecrawl — `fetch`
@@ -130,25 +134,11 @@ Smoke test:
 python -c "from pathlib import Path; from env_loader import load_lab_env; load_lab_env(Path.cwd()); from tools import TOOL_FUNCTIONS as T; r=T['fetch']('https://example.com'); items=r.get('items') or []; print({'error':r.get('error'), 'message':r.get('message'), 'item_count':len(items), 'first_title':items[0].get('title') if items else None})"
 ```
 
-## 7. `[CORE]` RapidAPI Twitter API45 — `timeline`, `social_search`
+`timeline` and `social_search` are Tavily fallbacks constrained to `x.com` and `twitter.com`.
 
-- [API page](https://rapidapi.com/alexanderxbx/api/twitter-api45)
+They use web-indexed results, so they do not guarantee a complete X timeline or native X ranking.
 
-Đăng ký plan của API, copy key, rồi thêm vào `.env`:
-
-```bash
-RAPIDAPI_KEY=...
-RAPIDAPI_TWITTER_HOST=twitter-api45.p.rapidapi.com
-```
-
-Smoke tests:
-
-```bash
-python -c "from pathlib import Path; from env_loader import load_lab_env; load_lab_env(Path.cwd()); from tools import TOOL_FUNCTIONS as T; r=T['timeline']('sama', limit=1); items=r.get('items') or []; print({'error':r.get('error'), 'message':r.get('message'), 'item_count':len(items), 'first_title':items[0].get('title') if items else None})"
-python -c "from pathlib import Path; from env_loader import load_lab_env; load_lab_env(Path.cwd()); from tools import TOOL_FUNCTIONS as T; r=T['social_search']('OpenAI', limit=1); items=r.get('items') or []; print({'error':r.get('error'), 'message':r.get('message'), 'item_count':len(items), 'first_title':items[0].get('title') if items else None})"
-```
-
-## 8. `[OPTIONAL]` arXiv/PDF — `papers`, `paper_text`
+## 7. `[OPTIONAL]` arXiv/PDF — `papers`, `paper_text`
 
 Không cần API key. arXiv có rate limit; tránh chạy liên tục.
 Chỉ cần cài `pypdf` nếu nhóm chọn dùng `paper_text`.

@@ -8,7 +8,13 @@ import requests
 from tools._shared import TIMEOUT, domain, err
 
 
-def web_search(query: str = "", topic: str = "general", timeframe: str | None = "week", max_results: int = 5) -> dict[str, Any]:
+def web_search(
+    query: str = "",
+    topic: str = "general",
+    timeframe: str | None = "week",
+    max_results: int = 5,
+    include_domains: list[str] | None = None,
+) -> dict[str, Any]:
     try:
         key = os.getenv("TAVILY_API_KEY")
         if not key:
@@ -16,6 +22,8 @@ def web_search(query: str = "", topic: str = "general", timeframe: str | None = 
         body: dict[str, Any] = {"query": query, "topic": topic, "max_results": int(max_results or 5), "search_depth": "basic"}
         if timeframe:
             body["time_range"] = timeframe
+        if include_domains:
+            body["include_domains"] = include_domains
         response = requests.post(
             "https://api.tavily.com/search",
             json=body,
@@ -34,4 +42,3 @@ def web_search(query: str = "", topic: str = "general", timeframe: str | None = 
         return {"tool": "web_search", "query": query, "topic": topic, "timeframe": timeframe, "items": items}
     except Exception as exc:
         return err("web_search", exc)
-
