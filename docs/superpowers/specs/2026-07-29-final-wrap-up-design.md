@@ -29,7 +29,7 @@ Before updating the branch, the existing staged, unstaged, and untracked WIP is 
 1. A named Git stash including untracked files.
 2. A patch and file inventory stored under `/tmp`.
 
-The branch is then fast-forwarded to the latest `origin/main`, and the WIP is restored.
+The branch commits are then rebased onto the latest `origin/main`, and the WIP is restored.
 
 Conflicts are resolved by preserving the latest committed product code and retaining only evidence that matches the final prompt and tool hashes.
 
